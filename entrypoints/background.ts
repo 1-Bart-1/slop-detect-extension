@@ -11,7 +11,8 @@ export default defineBackground(() => {
   async function ensureHost(): Promise<void> {
     const open = await browser.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] });
     if (open.length > 0) return;
-    creating ??= hostSettings()
+    creating ??= hostSettings
+      .get()
       .then((settings) =>
         browser.offscreen.createDocument({
           url: HOST_PAGE + hostQuery(settings),

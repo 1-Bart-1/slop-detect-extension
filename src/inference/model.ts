@@ -3,6 +3,9 @@
 /** The exported model directory. VITE_REPO points a build at a local export. */
 export const REPO: string =
   import.meta.env.VITE_REPO ?? 'https://huggingface.co/VoightKampffLabs/voi-slop-detect-380M/resolve/main';
+/** The directory of the graph and its weights, inside the model directory. */
+export const GRAPH_DIR = 'onnx';
+export const GRAPH_NAME = 'model_quantized.onnx';
 /**
  * The name the graph file gives its weights file, which sits next to it. The model is two
  * files because the runtime parses a one-file model inside WebAssembly memory: 1 GB that

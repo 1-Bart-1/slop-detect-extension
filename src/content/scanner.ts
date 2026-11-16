@@ -1,6 +1,6 @@
 import type { Bands, Item, Scored } from '@/src/protocol';
 import type { Site } from '@/src/sites/types';
-import { isBadge, showBadge } from './badge';
+import { createBadge, isBadge, paintBadge, placeBadge } from './badge';
 import { verdict } from './verdict';
 
 /** Where the scanner sends texts. The entrypoint backs it with the port to the model host. */
@@ -12,8 +12,12 @@ export interface Link {
 /** One post or comment of the page. */
 interface Block {
   id: number;
-  /** The element that holds the text; the badge goes at its top. */
+  /** The element that holds the text. */
   element: HTMLElement;
+  /** Finds the element the badge follows, which the site may add after the text. */
+  anchor(): Element | null;
+  /** In the page while the block has a verdict to show. */
+  badge: HTMLElement | null;
   /** Inside the viewport or within a screen of it. */
   near: boolean;
   /** Handed to the host and not cancelled. */
@@ -72,8 +76,7 @@ export class Scanner {
     clearTimeout(this.rescan);
     clearTimeout(this.flush);
     this.flush = undefined;
-    this.release(true);
-    for (const block of this.blocks.values()) showBadge(block.element, null);
+    for (const block of this.blocks.values()) block.badge?.remove();
     this.blocks.clear();
     this.byId.clear();
     this.outbox.clear();
@@ -87,13 +90,11 @@ export class Scanner {
   }
 
   /**
-   * Forgets that the unanswered blocks were sent, so they go out again when the host
-   * accepts. `tell` cancels them at the host too; without it the host is gone anyway.
+   * The link to the host is gone, and the host has dropped what it had from this page:
+   * the unanswered blocks go out again when a host accepts.
    */
-  release(tell: boolean): void {
-    const waiting = [...this.blocks.values()].filter((block) => block.sent && !block.result);
-    for (const block of waiting) block.sent = false;
-    if (tell && waiting.length) this.link.cancel(waiting.map((block) => block.id));
+  release(): void {
+    for (const block of this.blocks.values()) if (waiting(block)) block.sent = false;
   }
 
   /** The thresholds and the display choice; every badge is drawn again. */
@@ -118,15 +119,27 @@ export class Scanner {
       for (const item of document.querySelectorAll(kind.item)) {
         const element = item.querySelector<HTMLElement>(kind.text);
         if (!element) continue;
+        const anchor = () => (kind.anchor ? item.querySelector(kind.anchor) : null);
         const block = this.blocks.get(element);
-        if (!block) this.track(element);
+        if (!block) this.track(element, anchor);
         else if (block.sent && lengthOf(element) !== block.length) this.reset(block);
+        // The site may have drawn the item again, without the badge.
+        else if (block.badge && !block.badge.isConnected) this.render(block);
       }
     }
   }
 
-  private track(element: HTMLElement): void {
-    const block: Block = { id: this.nextId++, element, near: false, sent: false, length: 0, result: null };
+  private track(element: HTMLElement, anchor: Block['anchor']): void {
+    const block: Block = {
+      id: this.nextId++,
+      element,
+      anchor,
+      badge: null,
+      near: false,
+      sent: false,
+      length: 0,
+      result: null,
+    };
     this.blocks.set(element, block);
     this.byId.set(block.id, block);
     this.viewport.observe(element);
@@ -143,14 +156,14 @@ export class Scanner {
   private reset(block: Block): void {
     this.withdraw(block);
     block.result = null;
-    showBadge(block.element, null);
+    this.render(block);
     this.enqueue(block);
   }
 
   /** Takes a block back from the outbox or from the host. */
   private withdraw(block: Block): void {
     this.outbox.delete(block);
-    if (block.sent && !block.result) this.link.cancel([block.id]);
+    if (waiting(block)) this.link.cancel([block.id]);
     block.sent = false;
   }
 
@@ -187,14 +200,20 @@ export class Scanner {
 
   private render(block: Block): void {
     const score = block.result?.score;
-    if (score == null || !this.bands) {
-      showBadge(block.element, null);
+    const shown = score != null && this.bands ? verdict(score, this.bands, this.showMiddle) : null;
+    if (!shown) {
+      block.badge?.remove();
+      block.badge = null;
       return;
     }
-    const title = `Slop Detect: score ${score.toFixed(3)} of 1, ${block.result!.tokens} tokens`;
-    showBadge(block.element, verdict(score, this.bands, this.showMiddle), title);
+    block.badge ??= createBadge();
+    paintBadge(block.badge, shown, `Slop Detect: score ${score!.toFixed(3)} of 1, ${block.result!.tokens} tokens`);
+    if (!block.badge.isConnected) placeBadge(block.badge, block.anchor(), block.element);
   }
 }
+
+/** At the host, and not answered yet. */
+const waiting = (block: Block) => block.sent && !block.result;
 
 /** Cheap to read, unlike innerText, and the badge does not count: its text is in a shadow root. */
 const lengthOf = (element: Element) => element.textContent?.length ?? 0;

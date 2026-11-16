@@ -1,6 +1,6 @@
 # Slop Detect, the Chrome extension
 
-Marks the posts and comments of the listed sites with `AI: 0.93` or `Human: 0.04`. The
+Marks the posts and comments of the listed sites with `AI 0.93` or `Human 0.04`. The
 score comes from `voi-slop-detect-380M`, which runs in the browser: on the GPU through
 WebGPU, or on the CPU through WebAssembly. No text leaves the machine. Reddit is the only
 site so far.
@@ -24,9 +24,10 @@ directory served over HTTP instead of Hugging Face.
 |---|---|---|
 | content script | `entrypoints/feed.content.ts`, `src/content/` | finds the site's text blocks, sends the ones within a screen of the viewport, draws the badges |
 | background | `entrypoints/background.ts` | starts the model host |
-| model host | `entrypoints/offscreen/` | an offscreen document shared by all tabs: score cache, log, state; closes after five minutes without a tab |
-| worker | `src/inference/` | downloads and caches the model, tokenizes, batches, runs ONNX Runtime |
-| pages | `entrypoints/popup`, `options`, `log` | switches, model download, settings, the host's log |
+| model host | `entrypoints/offscreen/`, `src/host/` | an offscreen document shared by all tabs: score cache, log, state; closes after five minutes without a tab |
+| worker | `src/inference/` | downloads and caches the model, tokenizes, batches, runs ONNX Runtime (`session.ts`) |
+| pages | `entrypoints/popup`, `options`, `log`, `src/ui/` | switches, model download, settings, the host's log |
+| shared | `src/protocol.ts`, `src/ports.ts`, `src/settings.ts` | the messages between these parts, the ports that carry them, the stored settings |
 
 The host is an offscreen document and not the service worker: Chrome stops a service worker
 after 30 seconds, and only a document gets the cross-origin isolation that WebAssembly
@@ -42,7 +43,8 @@ the model's `bands.json`); the band between gets a badge only with the option sw
 ## Add a site
 
 Add a `Site` to `src/sites/`: match patterns, host names, and for each kind of text a
-selector of the item and of the text element inside it. List it in `src/sites/index.ts`.
+selector of the item, of the text element inside it, and of the element on its metadata
+line that the badge follows. List it in `src/sites/index.ts`.
 
 ## Test
 

@@ -1,10 +1,10 @@
 import '@/src/ui/page.css';
-import type { Control, HostState } from '@/src/protocol';
-import { displaySettings, saveDisplaySettings, saveHostSettings } from '@/src/settings';
+import { describeState } from '@/src/host/state';
+import type { HostState } from '@/src/protocol';
+import { displaySettings, hostSettings } from '@/src/settings';
 import { SITES } from '@/src/sites';
-import { connectHost } from '@/src/ui/host';
-
-const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+import { element } from '@/src/ui/dom';
+import { controlHost } from '@/src/ui/host';
 
 const enabled = element<HTMLInputElement>('enabled');
 const sites = element<HTMLDivElement>('sites');
@@ -13,10 +13,8 @@ const progress = element<HTMLProgressElement>('progress');
 const download = element<HTMLButtonElement>('download');
 const downloadNote = element<HTMLParagraphElement>('download-note');
 
-// --- Switches ---
-
 async function drawSwitches(): Promise<void> {
-  const settings = await displaySettings();
+  const settings = await displaySettings.get();
   enabled.checked = settings.enabled;
   sites.replaceChildren(
     ...SITES.map((site) => {
@@ -25,8 +23,8 @@ async function drawSwitches(): Promise<void> {
       box.checked = !settings.sitesOff[site.name];
       box.disabled = !settings.enabled;
       box.addEventListener('change', async () => {
-        const current = await displaySettings();
-        await saveDisplaySettings({ sitesOff: { ...current.sitesOff, [site.name]: !box.checked } });
+        const current = await displaySettings.get();
+        await displaySettings.save({ sitesOff: { ...current.sitesOff, [site.name]: !box.checked } });
       });
       const label = document.createElement('label');
       label.className = 'indent';
@@ -36,36 +34,8 @@ async function drawSwitches(): Promise<void> {
   );
 }
 
-enabled.addEventListener('change', async () => {
-  await saveDisplaySettings({ enabled: enabled.checked });
-  await drawSwitches();
-});
-
-// --- Model ---
-
-const megabytes = (bytes: number) => `${Math.round(bytes / 1e6)} MB`;
-
-function describe(state: HostState): string {
-  switch (state.phase) {
-    case 'no-model':
-      return 'Not downloaded yet.';
-    case 'loading':
-      return state.cached
-        ? 'Reading the model from disk'
-        : `Downloading: ${megabytes(state.loaded)} of ${megabytes(state.total)}`;
-    case 'preparing':
-      return 'Preparing the model';
-    case 'ready':
-      return state.backend === 'webgpu'
-        ? 'Ready, on the GPU (WebGPU).'
-        : `Ready, on the CPU (WebAssembly, ${state.threads} threads). Slower than a GPU.`;
-    case 'error':
-      return `Failed: ${state.message}`;
-  }
-}
-
 function drawState(state: HostState): void {
-  status.textContent = describe(state);
+  status.textContent = describeState(state);
   status.classList.toggle('error', state.phase === 'error');
   progress.hidden = state.phase !== 'loading';
   if (state.phase === 'loading') progress.value = state.total ? state.loaded / state.total : 0;
@@ -74,21 +44,18 @@ function drawState(state: HostState): void {
   downloadNote.hidden = state.phase !== 'no-model';
 }
 
-let send: ((message: Control) => void) | null = null;
+const tellHost = controlHost(drawState);
 
+enabled.addEventListener('change', async () => {
+  await displaySettings.save({ enabled: enabled.checked });
+  await drawSwitches();
+});
 download.addEventListener('click', async () => {
   // Remembered, so the next start of the host loads the model without asking.
-  await saveHostSettings({ modelAllowed: true });
-  send?.({ type: 'download' });
+  await hostSettings.save({ modelAllowed: true });
+  tellHost({ type: 'download' });
 });
-
-// --- Links ---
-
 element('open-log').addEventListener('click', () => void browser.tabs.create({ url: browser.runtime.getURL('/log.html') }));
 element('open-options').addEventListener('click', () => void browser.runtime.openOptionsPage());
 
 void drawSwitches();
-connectHost(drawState).then(
-  (connected) => (send = connected),
-  (error) => drawState({ phase: 'error', message: String(error) }),
-);

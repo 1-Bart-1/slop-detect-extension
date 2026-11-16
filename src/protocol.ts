@@ -26,19 +26,6 @@ export interface Scored {
   score: number | null;
 }
 
-/** Host to worker. A cancelled text that has not run yet is dropped without an answer. */
-export type ToWorker = { type: 'score'; items: Item[] } | { type: 'cancel'; ids: number[] };
-
-/** Worker to host. */
-export type FromWorker =
-  | { type: 'progress'; loaded: number; total: number; cached: boolean }
-  | { type: 'compiling' }
-  /** One line of the worker's trace, for the log page. */
-  | { type: 'log'; line: string }
-  | { type: 'ready'; bands: Bands; backend: Backend; threads: number }
-  | { type: 'results'; results: Scored[] }
-  | { type: 'error'; message: string };
-
 /** What the host is doing, as the popup shows it and the content scripts act on it. */
 export type HostState =
   /** The user has not agreed to the model download yet. */
@@ -49,16 +36,24 @@ export type HostState =
   | { phase: 'ready'; bands: Bands; backend: Backend; threads: number }
   | { phase: 'error'; message: string };
 
+/**
+ * Texts to score, from a content script to the host and from the host to its worker. A
+ * cancelled text that has not run yet is dropped without an answer.
+ */
+export type ScoreRequest = { type: 'score'; items: Item[] } | { type: 'cancel'; ids: number[] };
+export type ResultsMessage = { type: 'results'; results: Scored[] };
 export type StateMessage = { type: 'state'; state: HostState };
+
+/** Worker to host. A log message is one line of the worker's trace, for the log page. */
+export type FromWorker = StateMessage | ResultsMessage | { type: 'log'; line: string };
 
 /** Any extension context to the background service worker: start the host if it is not running. */
 export type ToBackground = { type: 'ensure-host' };
 export type FromBackground = { ok: true } | { ok: false; error: string };
 
-/** The port a content script opens to the host. */
+/** The port a content script opens to the host: it sends a `ScoreRequest`. */
 export const SCORE_PORT = 'score';
-export type ToHost = { type: 'score'; items: Item[] } | { type: 'cancel'; ids: number[] };
-export type FromHost = { type: 'results'; results: Scored[] } | StateMessage;
+export type FromHost = ResultsMessage | StateMessage;
 
 /** The port the popup and the options page open to the host: they get its state and can start the download. */
 export const CONTROL_PORT = 'control';

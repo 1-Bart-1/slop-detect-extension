@@ -1,5 +1,26 @@
 import type { Backend } from './protocol';
 
+/** One object of settings in extension storage, read with its defaults filled in. */
+function stored<T extends object>(area: 'local' | 'sync', key: string, defaults: T) {
+  const get = async (): Promise<T> => {
+    const found = await browser.storage[area].get(key);
+    return { ...defaults, ...(found[key] as Partial<T> | undefined) };
+  };
+  return {
+    get,
+    async save(change: Partial<T>): Promise<void> {
+      await browser.storage[area].set({ [key]: { ...(await get()), ...change } });
+    },
+    /** Calls back with the settings now and after every change. */
+    watch(listener: (settings: T) => void): void {
+      void get().then(listener);
+      browser.storage[area].onChanged.addListener((changes) => {
+        if (key in changes) void get().then(listener);
+      });
+    },
+  };
+}
+
 /**
  * How the model host runs. The host is an offscreen document and cannot read storage, so
  * the background hands it these in its URL when it starts; a change applies to the next start.
@@ -13,17 +34,11 @@ export interface HostSettings {
   modelAllowed: boolean;
 }
 
-const HOST_KEY = 'host';
-const HOST_DEFAULTS: HostSettings = { backend: 'auto', threads: 8, modelAllowed: false };
-
-export async function hostSettings(): Promise<HostSettings> {
-  const stored = await browser.storage.local.get(HOST_KEY);
-  return { ...HOST_DEFAULTS, ...(stored[HOST_KEY] as Partial<HostSettings> | undefined) };
-}
-
-export async function saveHostSettings(change: Partial<HostSettings>): Promise<void> {
-  await browser.storage.local.set({ [HOST_KEY]: { ...(await hostSettings()), ...change } });
-}
+export const hostSettings = stored<HostSettings>('local', 'host', {
+  backend: 'auto',
+  threads: 8,
+  modelAllowed: false,
+});
 
 /** The settings as the query string of the host page, which hands it on to its worker. */
 export function hostQuery(settings: HostSettings): string {
@@ -43,22 +58,8 @@ export interface DisplaySettings {
   showMiddle: boolean;
 }
 
-const DISPLAY_KEY = 'display';
-const DISPLAY_DEFAULTS: DisplaySettings = { enabled: true, sitesOff: {}, showMiddle: false };
-
-export async function displaySettings(): Promise<DisplaySettings> {
-  const stored = await browser.storage.sync.get(DISPLAY_KEY);
-  return { ...DISPLAY_DEFAULTS, ...(stored[DISPLAY_KEY] as Partial<DisplaySettings> | undefined) };
-}
-
-export async function saveDisplaySettings(change: Partial<DisplaySettings>): Promise<void> {
-  await browser.storage.sync.set({ [DISPLAY_KEY]: { ...(await displaySettings()), ...change } });
-}
-
-/** Calls back with the display settings now and after every change. */
-export function watchDisplaySettings(listener: (settings: DisplaySettings) => void): void {
-  void displaySettings().then(listener);
-  browser.storage.sync.onChanged.addListener((changes) => {
-    if (DISPLAY_KEY in changes) void displaySettings().then(listener);
-  });
-}
+export const displaySettings = stored<DisplaySettings>('sync', 'display', {
+  enabled: true,
+  sitesOff: {},
+  showMiddle: false,
+});

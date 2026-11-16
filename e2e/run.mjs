@@ -110,7 +110,8 @@ try {
             (badge) => badge.closest('shreddit-post, shreddit-comment') === item,
           );
           const drawn = own && own.getBoundingClientRect().height > 0;
-          return [item.id || item.getAttribute('thingid'), drawn ? own.shadowRoot.querySelector('span').textContent : null];
+          const place = own?.closest('[slot="credit-bar"], [slot="commentMeta"]') ? 'line' : 'text';
+          return [item.id || item.getAttribute('thingid'), drawn ? `${own.shadowRoot.querySelector('span').textContent} (${place})` : null];
         }),
       ),
     );
@@ -146,20 +147,26 @@ try {
   check('the post and the two long comments in view have badges', !!first.t3_post && !!first.t1_one && !!first.t1_three);
   check('the short comment has none', first.t1_two === null);
   check('the comment far below has none yet', first.t1_four === null);
-  check('the canned reply reads as AI', /^AI: /.test(first.t1_three ?? ''));
-  check('the personal reply reads as human', /^Human: /.test(first.t1_one ?? ''));
+  check('the canned reply reads as AI', /^AI /.test(first.t1_three ?? ''));
+  check('the personal reply reads as human', /^Human /.test(first.t1_one ?? ''));
+  check(
+    'the badges are on the metadata lines',
+    [first.t3_post, first.t1_one, first.t1_three].every((badge) => badge?.endsWith('(line)')),
+  );
 
   await page.locator('shreddit-comment[thingid="t1_four"]').scrollIntoViewIfNeeded();
   const second = await waitForBadges(4);
   console.log('badges after scrolling:', JSON.stringify(second));
   check('the comment far below has a badge after scrolling to it', !!second.t1_four);
+  check('with no time on its metadata line, the badge is at the top of the text', !!second.t1_four?.endsWith('(text)'));
 
   const hostLog = await log.locator('#log').innerText();
   console.log('--- host log ---');
   console.log(hostLog);
   const fromCache = hostLog.includes('model_quantized.onnx_data: 448471040 bytes from cache');
   check(cached ? 'the model came from the cache' : 'the model was downloaded', fromCache === cached);
-  check('the scored text is the block alone, without the badge', !/AI: |Human: /.test(await page.locator('[slot="comment"]').first().innerText()));
+  const farText = await page.locator('shreddit-comment[thingid="t1_four"] [slot="comment"]').innerText();
+  check('the scored text is the block alone, without the badge', !/AI \d|Human \d/.test(farText));
 } finally {
   await context.close();
   server.close();

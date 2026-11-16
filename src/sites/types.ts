@@ -11,15 +11,20 @@ export interface Site {
   blocks: BlockKind[];
 }
 
-/** One kind of user-written text on a site. */
+/**
+ * One kind of user-written text on a site. In `text` and `anchor`, `:scope` is the item
+ * and the first match in document order is taken, so neither may match inside a nested
+ * item that comes before the item's own.
+ */
 export interface BlockKind {
   name: string;
   /** Selects each post or comment. */
   item: string;
-  /**
-   * Selects the element with the text inside an item; `:scope` is the item, and the first
-   * match in document order is taken. It must be an element that draws its own children,
-   * since the badge goes inside it, and it must not be the text of a nested item.
-   */
+  /** Selects the element with the text inside an item. Its `innerText` is what gets scored. */
   text: string;
+  /**
+   * Selects the element on the item's metadata line that the badge follows, usually the
+   * time. Where it matches nothing the badge goes to the top of the text.
+   */
+  anchor?: string;
 }

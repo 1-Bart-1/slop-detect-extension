@@ -8,9 +8,15 @@
     <!--
       The structure of reddit.com on 2026-11-16, reduced. The post's text-body slot is on two
       nested elements, and the outer one draws only what its shadow root slots (the script
-      below gives it one). A comment's body is some levels down, before its replies.
+      below gives it one). A comment's body is some levels down, before its replies. Posts
+      and comments have a metadata line with the time, which the badge follows.
     -->
     <shreddit-post id="t3_post" author="first_author" post-title="Moving a home server to a new disk">
+      <div slot="credit-bar">
+        <span style="display: flex; gap: 4px">
+          <span>r/selfhosted</span><span>•</span><faceplate-timeago><time>4h ago</time></faceplate-timeago>
+        </span>
+      </div>
       <h1 slot="title">Moving a home server to a new disk</h1>
       <shreddit-post-text-body slot="text-body">
         <div slot="text-body" class="text-neutral-content">
@@ -29,7 +35,11 @@
 
     <shreddit-comment thingid="t1_one" author="second_author" depth="0">
       <details open>
-        <summary><div slot="commentMeta">second_author</div></summary>
+        <summary>
+          <div slot="commentMeta" style="display: flex">
+            <span>second_author</span><span>•</span><a href="#"><faceplate-timeago><time>3h ago</time></faceplate-timeago></a>
+          </div>
+        </summary>
         <div class="grid">
           <div class="min-w-0">
             <div slot="comment">
@@ -47,7 +57,11 @@
           <div id="comment-children">
             <shreddit-comment thingid="t1_two" author="third_author" depth="1">
               <details open>
-                <summary><div slot="commentMeta">third_author</div></summary>
+                <summary>
+                  <div slot="commentMeta" style="display: flex">
+                    <span>third_author</span><span>•</span><a href="#"><faceplate-timeago><time>2h ago</time></faceplate-timeago></a>
+                  </div>
+                </summary>
                 <div class="grid">
                   <div class="min-w-0">
                     <div slot="comment">
@@ -64,7 +78,11 @@
 
     <shreddit-comment thingid="t1_three" author="fourth_author" depth="0">
       <details open>
-        <summary><div slot="commentMeta">fourth_author</div></summary>
+        <summary>
+          <div slot="commentMeta" style="display: flex">
+            <span>fourth_author</span><span>•</span><a href="#"><faceplate-timeago><time>2h ago</time></faceplate-timeago></a>
+          </div>
+        </summary>
         <div class="grid">
           <div class="min-w-0">
             <div slot="comment">
@@ -84,7 +102,10 @@
       </details>
     </shreddit-comment>
 
-    <!-- Far below the fold: scored only after the page is scrolled. -->
+    <!--
+      Far below the fold: scored only after the page is scrolled. Its metadata line has no
+      time, so its badge goes to the top of the text.
+    -->
     <div style="height: 500vh"></div>
 
     <shreddit-comment thingid="t1_four" author="fifth_author" depth="0">

@@ -1,5 +1,5 @@
 import type { Bands } from '@/src/protocol';
-import { CACHE_NAME, REPO, WEIGHTS_BYTES, WEIGHTS_NAME } from './model';
+import { CACHE_NAME, GRAPH_DIR, GRAPH_NAME, REPO, WEIGHTS_BYTES, WEIGHTS_NAME } from './model';
 import { describe, log } from './trace';
 
 type Bytes = Uint8Array<ArrayBuffer>;
@@ -89,9 +89,9 @@ export async function loadModelFiles(progress: Progress): Promise<ModelFiles> {
     loadFile(cache, 'tokenizer.json', small).then(json),
     loadFile(cache, 'tokenizer_config.json', small).then(json),
     loadFile(cache, 'bands.json', small).then((bytes) => json(bytes) as Bands),
-    loadFile(cache, 'onnx/model_quantized.onnx', small),
+    loadFile(cache, `${GRAPH_DIR}/${GRAPH_NAME}`, small),
   ]);
   // Alone and last: the only file with a progress bar.
-  const weights = await loadFile(cache, `onnx/${WEIGHTS_NAME}`, WEIGHTS_BYTES, progress);
+  const weights = await loadFile(cache, `${GRAPH_DIR}/${WEIGHTS_NAME}`, WEIGHTS_BYTES, progress);
   return { model: { graph, weights }, tokenizer, tokenizerConfig, bands };
 }

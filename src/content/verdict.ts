@@ -4,7 +4,7 @@ export type Band = 'human' | 'edited' | 'ai';
 
 export interface Verdict {
   band: Band;
-  /** What the badge says, e.g. `AI: 0.93`. */
+  /** What the badge says, e.g. `AI 0.93`. */
   label: string;
 }
 
@@ -17,5 +17,5 @@ const NAMES: Record<Band, string> = { human: 'Human', edited: 'AI-edited', ai: '
 export function verdict(score: number, bands: Bands, showMiddle: boolean): Verdict | null {
   const band: Band = score >= bands.generated_min ? 'ai' : score < bands.flag_min ? 'human' : 'edited';
   if (band === 'edited' && !showMiddle) return null;
-  return { band, label: `${NAMES[band]}: ${score.toFixed(2)}` };
+  return { band, label: `${NAMES[band]} ${score.toFixed(2)}` };
 }
