@@ -7,6 +7,8 @@ test('finds a site by its host and its subdomains', () => {
   expect(siteOf('reddit.com')?.name).toBe('reddit');
   expect(siteOf('www.linkedin.com')?.name).toBe('linkedin');
   expect(siteOf('news.ycombinator.com')?.name).toBe('hackernews');
+  expect(siteOf('x.com')?.name).toBe('twitter');
+  expect(siteOf('mobile.twitter.com')?.name).toBe('twitter');
 });
 
 test('a host that only ends in the same letters is another site', () => {

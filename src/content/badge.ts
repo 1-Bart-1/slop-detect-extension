@@ -65,8 +65,13 @@ export function paintBadge(badge: HTMLElement, verdict: Verdict, title: string):
 /** Puts the badge right after `anchor`, or at the top of `text` when there is no anchor. */
 export function placeBadge(badge: HTMLElement, anchor: Element | null, text: Element): void {
   badge.style.cssText = anchor ? INLINE : ABOVE;
-  if (anchor) anchor.after(badge);
-  else text.prepend(badge);
+  if (!anchor) return text.prepend(badge);
+  anchor.after(badge);
+  // The anchor's font and colour, which its parent may not have: X sets them on each
+  // piece of a line, and the line itself is serif and white.
+  const { color, fontFamily } = getComputedStyle(anchor);
+  badge.style.color = color;
+  badge.style.fontFamily = fontFamily;
 }
 
 export const isBadge = (node: Node) => node instanceof Element && node.hasAttribute(MARK);
