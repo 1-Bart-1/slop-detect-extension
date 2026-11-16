@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Slop Detect options</title>
+    <meta name="manifest.open_in_tab" content="true" />
+    <style>
+      body {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 24px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Slop Detect options</h1>
+
+    <h2>Badges</h2>
+    <label><input type="checkbox" id="show-middle" /> Show a badge for texts between human and AI too ("AI-edited")</label>
+    <p class="muted">
+      A text gets "Human" below the model's flag threshold and "AI" from its generated threshold on. Texts under 30
+      tokens are not scored, and only the first 512 tokens of a long one are.
+    </p>
+
+    <h2>Where the model runs</h2>
+    <label>
+      Backend
+      <select id="backend">
+        <option value="auto">GPU when there is one, CPU otherwise</option>
+        <option value="webgpu">GPU only (WebGPU)</option>
+        <option value="wasm">CPU only (WebAssembly)</option>
+      </select>
+    </label>
+    <label>CPU threads, at most <input type="number" id="threads" min="1" max="32" /></label>
+    <p class="muted">These apply the next time the model starts: after five minutes without an open tab of a listed site, or a browser restart.</p>
+
+    <h2>Model files</h2>
+    <p id="status" class="muted"></p>
+    <button id="delete">Delete the downloaded model</button>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

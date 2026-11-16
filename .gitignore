@@ -1,0 +1,5 @@
+node_modules
+.output
+.wxt
+# Chrome profiles of the end-to-end runs: each holds the 450 MB model cache
+.profiles

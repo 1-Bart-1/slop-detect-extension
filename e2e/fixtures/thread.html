@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>A thread, with the markup of reddit.com</title>
+  </head>
+  <body>
+    <!--
+      The structure of reddit.com on 2026-11-16, reduced. The post's text-body slot is on two
+      nested elements, and the outer one draws only what its shadow root slots (the script
+      below gives it one). A comment's body is some levels down, before its replies.
+    -->
+    <shreddit-post id="t3_post" author="first_author" post-title="Moving a home server to a new disk">
+      <h1 slot="title">Moving a home server to a new disk</h1>
+      <shreddit-post-text-body slot="text-body">
+        <div slot="text-body" class="text-neutral-content">
+          <div class="md">
+            <p>
+              My old disk started throwing read errors last week, so I bought a new one and I am trying
+              to work out how to move everything over without reinstalling. The machine runs a few
+              containers and a file share for the family. I have a spare USB enclosure. Is cloning the
+              whole disk the way to go, or should I copy the data and set the system up again from
+              scratch?
+            </p>
+          </div>
+        </div>
+      </shreddit-post-text-body>
+    </shreddit-post>
+
+    <shreddit-comment thingid="t1_one" author="second_author" depth="0">
+      <details open>
+        <summary><div slot="commentMeta">second_author</div></summary>
+        <div class="grid">
+          <div class="min-w-0">
+            <div slot="comment">
+              <div class="md">
+                <p>
+                  I did this in the spring. Cloning worked, but I had to fix the boot entry afterwards
+                  because the new disk got a different identifier, and it took me an evening to find
+                  out why it would not start. If your containers keep their data in one directory I
+                  would honestly just copy that and reinstall, it is less to go wrong and you get rid
+                  of years of leftovers.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div id="comment-children">
+            <shreddit-comment thingid="t1_two" author="third_author" depth="1">
+              <details open>
+                <summary><div slot="commentMeta">third_author</div></summary>
+                <div class="grid">
+                  <div class="min-w-0">
+                    <div slot="comment">
+                      <div class="md"><p>Same here, reinstalling was quicker.</p></div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </shreddit-comment>
+          </div>
+        </div>
+      </details>
+    </shreddit-comment>
+
+    <shreddit-comment thingid="t1_three" author="fourth_author" depth="0">
+      <details open>
+        <summary><div slot="commentMeta">fourth_author</div></summary>
+        <div class="grid">
+          <div class="min-w-0">
+            <div slot="comment">
+              <div class="md">
+                <p>
+                  Great question! Migrating a home server can feel daunting, but with the right
+                  approach it is entirely manageable. Here are the key considerations: first, assess
+                  the health of your existing drive to ensure data integrity. Second, choose a cloning
+                  tool that aligns with your needs. Finally, verify the result thoroughly before
+                  decommissioning the old disk. By following these steps, you can ensure a smooth and
+                  seamless transition.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </shreddit-comment>
+
+    <!-- Far below the fold: scored only after the page is scrolled. -->
+    <div style="height: 500vh"></div>
+
+    <shreddit-comment thingid="t1_four" author="fifth_author" depth="0">
+      <details open>
+        <summary><div slot="commentMeta">fifth_author</div></summary>
+        <div class="grid">
+          <div class="min-w-0">
+            <div slot="comment">
+              <div class="md">
+                <p>
+                  Late to this, but check the power-on hours of that enclosure before you trust it
+                  with the only copy of anything. Mine dropped off the bus twice during a long copy
+                  and I only noticed because the checksums did not match at the end. I ended up doing
+                  the transfer over the network from another box instead, which was slower but at
+                  least it finished.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+    </shreddit-comment>
+
+    <script>
+      for (const body of document.querySelectorAll('shreddit-post-text-body')) {
+        body.attachShadow({ mode: 'open' }).innerHTML = '<slot name="text-body"></slot>';
+      }
+    </script>
+  </body>
+</html>

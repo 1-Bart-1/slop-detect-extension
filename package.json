@@ -1,0 +1,27 @@
+{
+  "name": "slop-detect-extension",
+  "description": "Marks AI-written posts and comments, with a model that runs in the browser.",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "build": "tsc --noEmit && wxt build",
+    "test": "vitest run",
+    "zip": "wxt zip",
+    "e2e": "node e2e/run.mjs",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@huggingface/tokenizers": "^0.2.0",
+    "onnxruntime-web": "^1.31.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.0",
+    "playwright-core": "^1.65.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0",
+    "wxt": "^0.21.5"
+  }
+}
