@@ -1,6 +1,7 @@
+import { onlyEnglish } from '@/src/content/language';
 import { type Link, Scanner } from '@/src/content/scanner';
 import { type Port, connectHost, post } from '@/src/ports';
-import { SCORE_PORT, type FromHost, type HostState, type ScoreRequest } from '@/src/protocol';
+import { SCORE_PORT, type FromHost, type HostState, type Item, type ScoreRequest } from '@/src/protocol';
 import { type DisplaySettings, displaySettings } from '@/src/settings';
 import { SITES, siteOf } from '@/src/sites';
 import type { Site } from '@/src/sites/types';
@@ -26,9 +27,17 @@ function run(site: Site): void {
   /** The host's state, while connected. */
   let state: HostState | null = null;
 
+  /** The language setting the scanner was started with. */
+  let englishOnly = true;
+
   const send = (request: ScoreRequest) => port && post(port, request);
+  /** A text in another language is never sent, and stays without an answer. */
+  async function score(items: Item[]): Promise<void> {
+    const taken = englishOnly ? await onlyEnglish(items) : items;
+    if (taken.length) send({ type: 'score', items: taken });
+  }
   const link: Link = {
-    score: (items) => send({ type: 'score', items }),
+    score: (items) => void score(items),
     cancel: (ids) => send({ type: 'cancel', ids }),
   };
 
@@ -80,7 +89,13 @@ function run(site: Site): void {
 
   function update(): void {
     const on = switchedOn();
+    if (scanner && settings && settings.englishOnly !== englishOnly) {
+      // Other texts are wanted now: start over, the host still has the scores.
+      scanner.stop();
+      scanner = null;
+    }
     if (on && !scanner) {
+      englishOnly = settings!.englishOnly;
       scanner = new Scanner(site, link);
       scanner.start();
     } else if (!on && scanner) {

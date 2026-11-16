@@ -5,6 +5,7 @@ import { element } from '@/src/ui/dom';
 import { controlHost } from '@/src/ui/host';
 
 const showMiddle = element<HTMLInputElement>('show-middle');
+const englishOnly = element<HTMLInputElement>('english-only');
 const backend = element<HTMLSelectElement>('backend');
 const threads = element<HTMLInputElement>('threads');
 const status = element<HTMLParagraphElement>('status');
@@ -22,6 +23,7 @@ const PHASES: Record<HostState['phase'], string> = {
 async function draw(): Promise<void> {
   const [display, host] = await Promise.all([displaySettings.get(), hostSettings.get()]);
   showMiddle.checked = display.showMiddle;
+  englishOnly.checked = display.englishOnly;
   backend.value = host.backend;
   threads.value = String(host.threads);
 }
@@ -32,6 +34,7 @@ const tellHost = controlHost((state) => {
 });
 
 showMiddle.addEventListener('change', () => void displaySettings.save({ showMiddle: showMiddle.checked }));
+englishOnly.addEventListener('change', () => void displaySettings.save({ englishOnly: englishOnly.checked }));
 backend.addEventListener('change', () => void hostSettings.save({ backend: backend.value as HostSettings['backend'] }));
 threads.addEventListener('change', () => {
   const count = Math.min(32, Math.max(1, Math.round(Number(threads.value)) || 1));

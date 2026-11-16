@@ -56,10 +56,13 @@ export interface DisplaySettings {
   sitesOff: Record<string, boolean>;
   /** Badges for the scores between the human and the AI band as well. */
   showMiddle: boolean;
+  /** Texts in another language are not scored: the model was trained on English. */
+  englishOnly: boolean;
 }
 
 export const displaySettings = stored<DisplaySettings>('sync', 'display', {
   enabled: true,
   sitesOff: {},
   showMiddle: false,
+  englishOnly: true,
 });

@@ -147,6 +147,7 @@ try {
   check('the post and the two long comments in view have badges', !!first.t3_post && !!first.t1_one && !!first.t1_three);
   check('the short comment has none', first.t1_two === null);
   check('the comment far below has none yet', first.t1_four === null);
+  check('the German comment has none', first.t1_german === null);
   check('the canned reply reads as AI', /^AI /.test(first.t1_three ?? ''));
   check('the personal reply reads as human', /^Human /.test(first.t1_one ?? ''));
   check(

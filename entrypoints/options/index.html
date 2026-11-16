@@ -17,6 +17,11 @@
 
     <h2>Badges</h2>
     <label><input type="checkbox" id="show-middle" /> Show a badge for texts between human and AI too ("AI-edited")</label>
+    <label><input type="checkbox" id="english-only" /> Score English texts only</label>
+    <p class="muted">
+      The model was trained on English. The language is told by the browser's own detector, on this computer; a text
+      it is not sure of is scored.
+    </p>
     <p class="muted">
       A text gets "Human" below the model's flag threshold and "AI" from its generated threshold on. Texts under 30
       tokens are not scored, and only the first 512 tokens of a long one are.

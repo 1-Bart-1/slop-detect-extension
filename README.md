@@ -33,6 +33,10 @@ The host is an offscreen document and not the service worker: Chrome stops a ser
 after 30 seconds, and only a document gets the cross-origin isolation that WebAssembly
 threads need.
 
+Only English texts are sent to the model, which was trained on English: the content script
+asks the browser's language detector (`i18n.detectLanguage`) and drops a text that is
+reliably in another language. An option switches this off.
+
 Texts under 30 tokens are not scored, and the first 512 tokens of a long one are. The
 worker runs the newest texts first and fills a batch up to 1,024 padded tokens on WebGPU
 and 256 on WebAssembly. The numbers behind this are in RFC 015 of the `slop-detector` repo.
