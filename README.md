@@ -33,6 +33,11 @@ The host is an offscreen document and not the service worker: Chrome stops a ser
 after 30 seconds, and only a document gets the cross-origin isolation that WebAssembly
 threads need.
 
+A text goes to the model as markdown, the form of its training texts: the content script
+writes the site's markup back as lists, quotes, bold, code fences and full link addresses
+(`src/content/markdown.ts`), and a site can leave parts out, like LinkedIn's "more" button
+and hashtags.
+
 Only English texts are sent to the model, which was trained on English: the content script
 asks the browser's language detector (`i18n.detectLanguage`) and drops a text that is
 reliably in another language. An option switches this off.
@@ -48,7 +53,8 @@ the model's `bands.json`); the band between gets a badge only with the option sw
 
 Add a `Site` to `src/sites/`: match patterns, host names, and for each kind of text a
 selector of the item, of the text element inside it, and of the element on its metadata
-line that the badge follows. List it in `src/sites/index.ts`.
+line that the badge follows. `skip` and `tidy` take out of a text what the site adds to it.
+List it in `src/sites/index.ts`.
 
 ## Test
 

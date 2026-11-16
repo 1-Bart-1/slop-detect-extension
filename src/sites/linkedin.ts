@@ -1,3 +1,4 @@
+import { plainHashtags } from './social';
 import type { Site } from './types';
 
 /** A comment, under a post of the feed. */
@@ -13,7 +14,7 @@ const TEXT = '[data-testid="expandable-text-box"]';
  * - a post is a list item of a `LazyColumn`, a comment has a `componentkey` that starts with
  *   `replaceableComment_`. The text of both is an `expandable-text-box`, which holds the
  *   whole text while it shows two or three lines of it, and a "more" button at its end,
- *   which is scored with the text. A post without text of its own may show a comment: the
+ *   which is not part of the text. A post without text of its own may show a comment: the
  *   comment's text is not the post's.
  * - the lines under an author's name are unnamed. On a post, the last of them (the time,
  *   or "Promoted") is the one line that a link follows; on a comment the time follows the
@@ -40,4 +41,6 @@ export const linkedin: Site = {
       anchor: ':scope a + div > p > span',
     },
   ],
+  skip: '[data-testid="expandable-text-button"]',
+  tidy: (markdown) => plainHashtags(markdown, true),
 };

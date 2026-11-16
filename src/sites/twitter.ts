@@ -1,3 +1,4 @@
+import { plainHashtags, withoutLeadingHandles } from './social';
 import type { Site } from './types';
 
 /**
@@ -9,6 +10,7 @@ import type { Site } from './types';
  *   inside the post that quotes it, and its text is not the outer post's.
  * - a long post in a timeline holds only the start of its text, up to "Show more"; the
  *   page of the post holds all of it.
+ * - an emoji in a text is an image, and a link shows a short form of its address.
  * - the time is a link: next to the author's name in a timeline, and under the text on
  *   the page of the post. An ad has no time, and a quoted post's time is not a link.
  */
@@ -25,4 +27,5 @@ export const twitter: Site = {
       anchor: ':scope a:has(> time)',
     },
   ],
+  tidy: (markdown) => plainHashtags(withoutLeadingHandles(markdown), false),
 };

@@ -9,6 +9,10 @@ export interface Site {
   /** The host names the patterns cover: the site of a page is found by its host's suffix. */
   hosts: string[];
   blocks: BlockKind[];
+  /** Selects elements inside a text that are not part of it: a button that expands it. */
+  skip?: string;
+  /** Takes out of a text's markdown what the training texts of the site did not have. */
+  tidy?(markdown: string): string;
 }
 
 /**
@@ -20,7 +24,7 @@ export interface BlockKind {
   name: string;
   /** Selects each post or comment. */
   item: string;
-  /** Selects the element with the text inside an item. Its `innerText` is what gets scored. */
+  /** Selects the element with the text inside an item. It is scored as markdown. */
   text: string;
   /**
    * Selects the element on the item's metadata line that the badge follows, usually the

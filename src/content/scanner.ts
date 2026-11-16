@@ -1,6 +1,7 @@
 import type { Bands, Item, Scored } from '@/src/protocol';
 import type { Site } from '@/src/sites/types';
 import { createBadge, isBadge, paintBadge, placeBadge } from './badge';
+import { toMarkdown } from './markdown';
 import { verdict } from './verdict';
 
 /** Where the scanner sends texts. The entrypoint backs it with the port to the model host. */
@@ -188,14 +189,19 @@ export class Scanner {
     const items: Item[] = [];
     for (const block of this.outbox) {
       if (!block.element.isConnected) continue;
-      // innerText, not textContent: the text as the reader sees it, with its line breaks.
-      const text = block.element.innerText.trim();
+      const text = this.read(block.element);
       block.sent = true;
       block.length = lengthOf(block.element);
       if (text) items.push({ id: block.id, text });
     }
     this.outbox.clear();
     if (items.length) this.link.score(items);
+  }
+
+  /** The text as the model was trained to read it: markdown, without what the site adds. */
+  private read(element: Element): string {
+    const markdown = toMarkdown(element, { skip: this.site.skip });
+    return (this.site.tidy?.(markdown) ?? markdown).trim();
   }
 
   private render(block: Block): void {
