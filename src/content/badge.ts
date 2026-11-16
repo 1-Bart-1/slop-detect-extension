@@ -8,7 +8,8 @@ const MARK = 'data-slop-detect';
  * colour: the dot has it, the fill is a faint tint of it, and the text is it mixed with
  * the line's own text colour, so the chip reads on a light and on a dark page alike.
  */
-const STYLE = `
+const STYLE = new CSSStyleSheet();
+STYLE.replaceSync(`
   span {
     display: inline-flex;
     align-items: center;
@@ -34,7 +35,7 @@ const STYLE = `
   .edited { --tone: #d98e04; }
   /* Most texts are human: no fill and the line's own colour, so a page is not full of pills. */
   .human { --tone: #2f9e5b; color: inherit; background: none; padding: 0; }
-`;
+`);
 
 /** On a metadata line, after the element it follows. */
 const INLINE = 'display:inline-flex;align-items:center;flex:none;margin-inline-start:6px;vertical-align:middle';
@@ -46,8 +47,11 @@ export function createBadge(): HTMLElement {
   const badge = document.createElement('span');
   badge.setAttribute(MARK, '');
   // A shadow root: the page's styles do not reach the chip, and its text is not part of
-  // any `innerText`, which is what gets scored.
-  badge.attachShadow({ mode: 'open' }).innerHTML = `<style>${STYLE}</style><span></span>`;
+  // any `innerText`, which is what gets scored. No markup and no style element: LinkedIn
+  // shows a <style> set through innerHTML as text.
+  const root = badge.attachShadow({ mode: 'open' });
+  root.adoptedStyleSheets = [STYLE];
+  root.append(document.createElement('span'));
   return badge;
 }
 

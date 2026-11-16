@@ -2,8 +2,8 @@
 
 Marks the posts and comments of the listed sites with `AI 0.93` or `Human 0.04`. The
 score comes from `voi-slop-detect-380M`, which runs in the browser: on the GPU through
-WebGPU, or on the CPU through WebAssembly. No text leaves the machine. Reddit is the only
-site so far.
+WebGPU, or on the CPU through WebAssembly. No text leaves the machine. The sites so far are
+Reddit, LinkedIn and Hacker News.
 
 ## Run it
 
