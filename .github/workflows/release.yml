@@ -1,0 +1,31 @@
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # to attach the zip to the release
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      # The store refuses a version it has seen, and the manifest takes its version from package.json.
+      - name: The tag must match the version in package.json
+        run: test "${TAG#v}" = "$(node -p "require('./package.json').version")"
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+      - run: npm test
+      - run: npx tsc --noEmit
+      - run: npm run zip
+      - run: gh release upload "$TAG" .output/*-chrome.zip --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
