@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the release notes are made from the history
       - uses: actions/setup-node@v7
         with:
           node-version: 26
@@ -26,6 +28,17 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run zip
       - run: gh release upload "$TAG" .output/*-chrome.zip --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+      # GitHub's generated notes list pull requests, and this repo commits to main:
+      # the notes are the commit subjects since the tag before this one.
+      - name: Write the release notes, unless the release has some
+        if: github.event.release.body == ''
+        run: |
+          previous=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
+          git log --pretty='- %s' ${previous:+"$previous.."}"$TAG" > "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
