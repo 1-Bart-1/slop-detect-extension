@@ -7,10 +7,11 @@ runs in your browser, so no text leaves the machine.
 
 Works on Reddit, LinkedIn, Hacker News and X.
 
+![Hacker News comments with badges](img/hn.png)
+
 <p>
-  <img src="img/hn.png" alt="Hacker News comments with badges" width="49%" />
-  <img src="img/twitter.png" alt="A post on X with a badge" width="25%" />
-  <img src="img/linkedin.png" alt="A LinkedIn post with a badge" width="24%" />
+  <img src="img/twitter.png" alt="A post on X with a badge" width="49%" />
+  <img src="img/linkedin.png" alt="A LinkedIn post with a badge" width="49%" />
 </p>
 
 ## Model
