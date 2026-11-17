@@ -3,6 +3,8 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   manifest: {
     name: 'Slop Detect',
+    // runtime.getContexts, which the background finds the model host with.
+    minimum_chrome_version: '116',
     // No host permissions: the content script's match patterns (src/sites) are all the
     // access to pages the extension has.
     permissions: ['offscreen', 'storage', 'unlimitedStorage'],

@@ -24,6 +24,12 @@ export default defineBackground(() => {
     await creating;
   }
 
+  // Nothing is scored before the model is downloaded, and the download needs a click:
+  // a new install opens the page that asks for it.
+  browser.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason === 'install') void browser.tabs.create({ url: browser.runtime.getURL('/welcome.html') });
+  });
+
   browser.runtime.onMessage.addListener((message: ToBackground, _sender, respond: (answer: FromBackground) => void) => {
     if (message.type !== 'ensure-host') return;
     ensureHost().then(

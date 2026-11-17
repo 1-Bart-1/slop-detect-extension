@@ -14,7 +14,7 @@ import type { Site } from './types';
 export const hackernews: Site = {
   name: 'hackernews',
   label: 'Hacker News',
-  matches: ['*://news.ycombinator.com/*'],
+  matches: ['https://news.ycombinator.com/*'],
   hosts: ['news.ycombinator.com'],
   blocks: [
     {

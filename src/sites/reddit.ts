@@ -19,7 +19,7 @@ import type { Site } from './types';
 export const reddit: Site = {
   name: 'reddit',
   label: 'Reddit',
-  matches: ['*://*.reddit.com/*'],
+  matches: ['https://*.reddit.com/*'],
   hosts: ['reddit.com'],
   blocks: [
     {

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome to Slop Detect</title>
+    <style>
+      body {
+        max-width: 480px;
+        margin: 0 auto;
+        padding: 40px 16px;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      #download {
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Slop Detect is installed</h1>
+    <p>
+      It marks posts and comments on <span id="sites"></span> as "AI" or "Human". The score is an estimate and can be
+      wrong.
+    </p>
+    <p>
+      First it needs a model, 450 MB from Hugging Face. The model runs on this computer, so the texts you read never
+      leave the browser.
+    </p>
+    <p id="status">Starting</p>
+    <progress id="progress" max="1" value="0" hidden></progress>
+    <button id="download" class="primary" hidden>Download model (450 MB)</button>
+    <p id="ready-note" hidden>Open one of the sites, or reload a tab that has one open.</p>
+    <p class="muted">Settings are on the <a id="open-options">options page</a>.</p>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

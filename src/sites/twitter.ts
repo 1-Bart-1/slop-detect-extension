@@ -17,7 +17,7 @@ import type { Site } from './types';
 export const twitter: Site = {
   name: 'twitter',
   label: 'X (Twitter)',
-  matches: ['*://x.com/*', '*://*.x.com/*', '*://*.twitter.com/*'],
+  matches: ['https://x.com/*', 'https://*.x.com/*', 'https://*.twitter.com/*'],
   hosts: ['x.com', 'twitter.com'],
   blocks: [
     {

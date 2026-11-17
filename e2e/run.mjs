@@ -75,6 +75,14 @@ try {
   const background = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
   // Node gives a chrome-extension: URL the origin "null": build it from the host, the extension's id.
   const origin = `chrome-extension://${new URL(background.url()).host}`;
+  // A new profile is a new install, which opens the welcome page in a tab of its own.
+  const welcomeUrl = `${origin}/welcome.html`;
+  if (!cached) {
+    const deadline = Date.now() + 10_000;
+    const opened = () => context.pages().some((tab) => tab.url() === welcomeUrl);
+    while (!opened() && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 100));
+    check('a new install opens the welcome page', opened());
+  }
   // The download is not allowed yet, and every band gets a badge, so each scored block shows one.
   await background.evaluate(
     async ({ host, display }) => {
@@ -135,6 +143,11 @@ try {
   await popup.goto(`${origin}/popup.html`);
   await popup.locator('#download').waitFor();
   check('the popup offers the download', (await popup.locator('#status').innerText()) === 'Not downloaded yet.');
+  const welcome = await context.newPage();
+  await welcome.goto(welcomeUrl);
+  await welcome.locator('#download').waitFor();
+  check('the welcome page offers the download', (await welcome.locator('#status').innerText()) === 'Not downloaded yet.');
+  check('the welcome page names the sites', /Reddit, LinkedIn, Hacker News, and X/.test(await welcome.locator('#sites').innerText()));
   await page.bringToFront();
   await page.waitForTimeout(1000);
   check('no badges before the download is allowed', count(await badges()) === 0);
@@ -143,6 +156,12 @@ try {
   // In view: the post and comments one to three. Comment two is too short to score.
   const first = await waitForBadges(3);
   check('the popup says where the model runs', /^Ready, on the /.test(await popup.locator('#status').innerText()));
+  check(
+    'the welcome page says the model is ready and what to do next',
+    /^Ready, on the /.test(await welcome.locator('#status').innerText()) &&
+      (await welcome.locator('#ready-note').isVisible()) &&
+      (await welcome.locator('#download').isHidden()),
+  );
   console.log('badges before scrolling:', JSON.stringify(first));
   check('the post and the two long comments in view have badges', !!first.t3_post && !!first.t1_one && !!first.t1_three);
   check('the short comment has none', first.t1_two === null);

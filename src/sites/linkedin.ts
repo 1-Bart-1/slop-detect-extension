@@ -25,7 +25,7 @@ const TEXT = '[data-testid="expandable-text-box"]';
 export const linkedin: Site = {
   name: 'linkedin',
   label: 'LinkedIn',
-  matches: ['*://*.linkedin.com/*'],
+  matches: ['https://*.linkedin.com/*'],
   hosts: ['linkedin.com'],
   blocks: [
     {
