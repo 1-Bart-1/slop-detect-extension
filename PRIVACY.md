@@ -9,6 +9,10 @@ comments on the page, to score them. The scoring happens in your browser, with a
 stored on your computer. The texts and the scores are not sent to us or to anyone else,
 and they are not saved.
 
+It also reads whether the computer is plugged in, to stop scoring while it runs on
+battery. In Firefox that comes from the optional power helper, a small program on your
+computer that reads it from the system. It is not saved or sent anywhere.
+
 ## What it stores
 
 - The model files, in the browser's cache, until you delete them on the options page or

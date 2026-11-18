@@ -52,6 +52,8 @@ export function hostQuery(settings: HostSettings): string {
 export interface DisplaySettings {
   /** Off: no page is scanned. */
   enabled: boolean;
+  /** On: nothing is scored while the computer runs on battery. */
+  onlyOnMains: boolean;
   /** Site name to off; a site that is not listed is on. */
   sitesOff: Record<string, boolean>;
   /** Badges for the scores between the human and the AI band as well. */
@@ -62,6 +64,7 @@ export interface DisplaySettings {
 
 export const displaySettings = stored<DisplaySettings>('sync', 'display', {
   enabled: true,
+  onlyOnMains: true,
   sitesOff: {},
   showMiddle: false,
   englishOnly: true,
