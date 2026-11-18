@@ -18,9 +18,10 @@ import {
 
 /**
  * The model host: one worker with the model, shared by every tab. Content scripts open a
- * port here and send text blocks; the scores go back over the same port. An offscreen
- * document has no extension API but messaging, so its settings arrive in its URL, and the
- * worker reads them from there too.
+ * port here and send text blocks; the scores go back over the same port. The page is
+ * Chrome's offscreen document, which has no extension API but messaging, or a frame in
+ * Firefox's background page; its settings arrive in its URL, and the worker reads them
+ * from there too.
  */
 
 /** With no tab, popup or log page connected for this long the host closes and frees the model. */
@@ -98,7 +99,13 @@ let idle: ReturnType<typeof setTimeout> | undefined;
 
 function closeWhenIdle(): void {
   clearTimeout(idle);
-  if (connected === 0) idle = setTimeout(() => window.close(), IDLE_MS);
+  if (connected === 0) idle = setTimeout(close, IDLE_MS);
+}
+
+/** An offscreen document closes itself; a frame is taken out of the page that holds it. */
+function close(): void {
+  if (window.frameElement) window.frameElement.remove();
+  else window.close();
 }
 
 function watch(port: Port): void {

@@ -1,27 +1,52 @@
 import type { FromBackground, ToBackground } from '@/src/protocol';
 import { hostQuery, hostSettings } from '@/src/settings';
 
-/** The offscreen document that hosts the model. Chrome allows one per extension. */
-const HOST_PAGE = '/offscreen.html';
+/** The page that hosts the model. There is one per extension. */
+const HOST_PAGE = '/host.html';
+
+/** Where the host page runs: whether it is open, and how to open it at a URL. */
+interface HostPlace {
+  isOpen(): Promise<boolean>;
+  open(url: string): Promise<void>;
+}
+
+/** Chrome's service worker cannot start a worker: the host is an offscreen document. */
+const offscreen: HostPlace = {
+  isOpen: async () =>
+    (await browser.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] })).length > 0,
+  open: (url) =>
+    browser.offscreen.createDocument({
+      url,
+      reasons: ['WORKERS'],
+      justification: 'Runs the detection model in a worker, on the GPU or on several threads.',
+    }),
+};
+
+/** Firefox's background page is persistent and has a DOM: the host is a frame in it. */
+const frame: HostPlace = {
+  isOpen: async () => document.querySelector('iframe') !== null,
+  open: (url) =>
+    new Promise((resolve) => {
+      const host = document.createElement('iframe');
+      host.addEventListener('load', () => resolve(), { once: true });
+      host.src = url;
+      document.body.append(host);
+    }),
+};
 
 export default defineBackground(() => {
-  /** Set while the document is being created: two tabs can ask at the same moment. */
-  let creating: Promise<void> | null = null;
+  const place = import.meta.env.FIREFOX ? frame : offscreen;
+  /** Set while the host is being looked for or opened: two tabs can ask at the same moment. */
+  let opening: Promise<void> | null = null;
 
-  async function ensureHost(): Promise<void> {
-    const open = await browser.runtime.getContexts({ contextTypes: ['OFFSCREEN_DOCUMENT'] });
-    if (open.length > 0) return;
-    creating ??= hostSettings
-      .get()
-      .then((settings) =>
-        browser.offscreen.createDocument({
-          url: HOST_PAGE + hostQuery(settings),
-          reasons: ['WORKERS'],
-          justification: 'Runs the detection model in a worker, on the GPU or on several threads.',
-        }),
-      )
-      .finally(() => (creating = null));
-    await creating;
+  async function openUnlessOpen(): Promise<void> {
+    if (await place.isOpen()) return;
+    await place.open(HOST_PAGE + hostQuery(await hostSettings.get()));
+  }
+
+  function ensureHost(): Promise<void> {
+    opening ??= openUnlessOpen().finally(() => (opening = null));
+    return opening;
   }
 
   // Nothing is scored before the model is downloaded, and the download needs a click:

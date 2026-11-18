@@ -22,8 +22,8 @@ function stored<T extends object>(area: 'local' | 'sync', key: string, defaults:
 }
 
 /**
- * How the model host runs. The host is an offscreen document and cannot read storage, so
- * the background hands it these in its URL when it starts; a change applies to the next start.
+ * How the model host runs. The background hands these to the host as a query string when
+ * it starts it; a change applies to the next start.
  */
 export interface HostSettings {
   /** `auto` tries WebGPU and falls back to WebAssembly; the other two run that backend only. */
