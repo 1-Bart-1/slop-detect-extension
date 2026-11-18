@@ -24,7 +24,7 @@ import {
  * port here and send text blocks; the scores go back over the same port. The page is
  * Chrome's offscreen document, which has no extension API but messaging, or a frame in
  * Firefox's background page; its settings arrive in its URL, and the worker reads them
- * from there too. The settings that decide whether texts are scored now come from the
+ * from there too. The settings that decide whether texts are scored come from the
  * background, and the worker runs only while they and the power source allow it.
  */
 
@@ -33,7 +33,6 @@ const IDLE_MS = 5 * 60_000;
 
 /** True once the user has agreed to the model download. */
 let modelAllowed = new URLSearchParams(location.search).get('model') === 'allowed';
-// Until the settings and the power source are in, as the worker would be.
 let state: HostState = { phase: modelAllowed ? 'preparing' : 'no-model' };
 let worker: Worker | null = null;
 /** What the tabs sent before the worker existed. */

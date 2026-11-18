@@ -35,7 +35,7 @@ const frame: HostPlace = {
 };
 
 /** Hands the host the settings that decide whether it scores; without a host it goes nowhere. */
-function tellHost({ enabled, onlyOnMains }: DisplaySettings): Promise<void> {
+function sendScoringSettings({ enabled, onlyOnMains }: DisplaySettings): Promise<void> {
   const message: ToHost = { type: 'scoring', settings: { enabled, onlyOnMains } };
   return browser.runtime.sendMessage(message).catch(() => undefined);
 }
@@ -48,7 +48,7 @@ export default defineBackground(() => {
   async function openUnlessOpen(): Promise<void> {
     if (await place.isOpen()) return;
     await place.open(HOST_PAGE + hostQuery(await hostSettings.get()));
-    await tellHost(await displaySettings.get());
+    await sendScoringSettings(await displaySettings.get());
   }
 
   function ensureHost(): Promise<void> {
@@ -62,7 +62,7 @@ export default defineBackground(() => {
     if (reason === 'install') void browser.tabs.create({ url: browser.runtime.getURL('/welcome.html') });
   });
 
-  displaySettings.watch((settings) => void tellHost(settings));
+  displaySettings.watch((settings) => void sendScoringSettings(settings));
   browser.commands.onCommand.addListener(async (command) => {
     if (command !== TOGGLE_COMMAND) return;
     const { enabled } = await displaySettings.get();

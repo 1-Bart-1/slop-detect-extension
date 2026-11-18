@@ -17,6 +17,7 @@ POLL_SECONDS = 2
 
 
 def read(path: Path) -> str:
+    """The stripped text of a file, or an empty string where it cannot be read."""
     try:
         return path.read_text().strip()
     except OSError:
@@ -34,12 +35,14 @@ def on_mains(supplies: Path) -> bool:
 
 
 def send(message: dict) -> None:
+    """Writes one native message to Firefox: its length, then its JSON."""
     data = json.dumps(message).encode()
     sys.stdout.buffer.write(struct.pack("=I", len(data)) + data)
     sys.stdout.buffer.flush()
 
 
 def main() -> None:
+    """Sends the power source at the start and after each change, until Firefox closes stdin."""
     supplies = Path(os.environ.get("SLOP_DETECT_POWER_SUPPLY", "/sys/class/power_supply"))
     last = None
     while True:
