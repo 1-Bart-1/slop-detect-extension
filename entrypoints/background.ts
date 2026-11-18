@@ -24,7 +24,7 @@ const offscreen: HostPlace = {
 
 /** Firefox's background page is persistent and has a DOM: the host is a frame in it. */
 const frame: HostPlace = {
-  isOpen: async () => document.querySelector('iframe') !== null,
+  isOpen: async () => document.querySelector(`iframe[src^="${HOST_PAGE}"]`) !== null,
   open: (url) =>
     new Promise((resolve) => {
       const host = document.createElement('iframe');

@@ -71,7 +71,8 @@ async function launchChrome(profile) {
 
 /** Firefox with the extension installed as a temporary add-on; the extension's origin. */
 async function launchFirefox(profile) {
-  const { id } = JSON.parse(readFileSync(path.join(EXTENSION, 'manifest.json'), 'utf8')).browser_specific_settings.gecko;
+  const manifest = JSON.parse(readFileSync(path.join(EXTENSION, 'manifest.json'), 'utf8'));
+  const { id } = manifest.browser_specific_settings.gecko;
   const browser = await puppeteer.launch({
     browser: 'firefox',
     executablePath: args.executable ?? 'firefox',
@@ -82,8 +83,7 @@ async function launchFirefox(profile) {
     env: { ...process.env, MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1' },
     extraPrefsFirefox: {
       'extensions.webextensions.uuids': JSON.stringify({ [id]: FIREFOX_UUID }),
-      // A temporary add-on is removed when Firefox closes: the next run finds its storage, as
-      // an installed add-on would.
+      // Keeps the model cache of a temporary add-on, which Firefox uninstalls when it closes.
       'extensions.webextensions.keepStorageOnUninstall': true,
       'extensions.webextensions.keepUuidOnUninstall': true,
     },
@@ -113,13 +113,48 @@ function check(what, ok) {
   failed ||= !ok;
 }
 
+/** Whether `predicate(arg)` holds in the tab within `ms`; errors while its page loads count as not yet. */
+async function holdsWithin(tab, ms, predicate, arg) {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (await tab.evaluate(predicate, arg).catch(() => false)) return true;
+    await sleep(100);
+  }
+  return false;
+}
+
 /** A new tab on one of the extension's pages, once it has loaded. */
 async function openPage(url) {
   const tab = await browser.newPage();
   // Firefox opens an extension page but never reports the navigation finished.
   tab.goto(url).catch(() => undefined);
-  await tab.waitForFunction((wanted) => location.href === wanted && document.readyState === 'complete', {}, url);
+  const loaded = (wanted) => location.href === wanted && document.readyState === 'complete';
+  if (!(await holdsWithin(tab, 30_000, loaded, url))) throw new Error(`${url} did not load`);
   return tab;
+}
+
+/** Reloads the add-on from one of its tabs and waits until it has a new background page. */
+async function reloadFirefoxAddOn(tab) {
+  await tab.evaluate(async () => ((await browser.runtime.getBackgroundPage()).beforeReload = true));
+  tab.evaluate(() => browser.runtime.reload()).catch(() => undefined);
+  const isNew = async () => {
+    const background = await browser.runtime.getBackgroundPage();
+    return !background.beforeReload && background.document.readyState === 'complete';
+  };
+  const deadline = Date.now() + 60_000;
+  while (Date.now() < deadline) {
+    // Opening a tab fails while Firefox closes the add-on's old tabs.
+    const probe = await browser.newPage().catch(() => null);
+    if (!probe) {
+      await sleep(100);
+      continue;
+    }
+    probe.goto(`${origin}/manifest.json`).catch(() => undefined);
+    const isBack = await holdsWithin(probe, 2000, isNew);
+    await probe.close().catch(() => undefined);
+    if (isBack) return;
+  }
+  throw new Error('the add-on did not come back from its reload');
 }
 
 const textOf = (tab, selector) => tab.$eval(selector, (element) => element.innerText);
@@ -132,9 +167,7 @@ try {
   const opened = async () => (await Promise.all((await browser.pages()).map(urlOf))).includes(welcomeUrl);
   while (!(await opened()) && Date.now() < deadline) await sleep(100);
   check('a new install opens the welcome page', await opened());
-  // The download is not allowed yet, and every band gets a badge, so each scored block
-  // shows one. Set from a page that does not start the model host, so the host's next
-  // start reads them.
+  // manifest.json is an extension page that does not start the model host.
   const settings = await openPage(`${origin}/manifest.json`);
   await settings.evaluate(
     async ({ host, display }) => {
@@ -147,11 +180,9 @@ try {
       display: { enabled: true, sitesOff: {}, showMiddle: true },
     },
   );
-  // The welcome page has started the host with the last run's settings: close it, so its
-  // next start reads these. Chrome does not bring back an extension it reloads here.
+  // The host the welcome page started holds the last run's settings.
   if (FIREFOX) {
-    settings.evaluate(() => browser.runtime.reload()).catch(() => undefined);
-    await sleep(2000);
+    await reloadFirefoxAddOn(settings);
   } else {
     await settings.evaluate(() => chrome.offscreen.closeDocument().catch(() => undefined));
     await settings.close();

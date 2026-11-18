@@ -27,9 +27,8 @@ jobs:
       - run: npm test
       - run: npx tsc --noEmit
       - run: npm run zip
-      # Firefox's zip comes with a zip of the sources, which AMO asks for when signing.
       - run: npm run zip -- -b firefox
-      - run: gh release upload "$TAG" .output/*-chrome.zip .output/*-firefox.zip --clobber
+      - run: gh release upload "$TAG" .output/*-chrome.zip .output/*-firefox.zip .output/*-sources.zip --clobber
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}

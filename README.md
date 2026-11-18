@@ -1,7 +1,6 @@
 # Slop Detect
 
-A Chrome and Firefox extension that marks posts and comments as `AI 0.93` or `Human 0.04`. The model
-runs in your browser, so no text leaves the machine.
+A Chrome and Firefox extension that marks posts and comments as `AI 0.93` or `Human 0.04`. The model runs in your browser, so no text leaves the machine.
 
 ![A Reddit post with an "AI 0.87" badge next to its time](img/reddit.png)
 
@@ -20,9 +19,7 @@ Works on Reddit, LinkedIn, Hacker News and X.
 the 8-bit quantized ONNX export.
 
 - Downloaded from Hugging Face once (450 MB), after you click "Download model".
-- Runs on the GPU through WebGPU, or on the CPU through WebAssembly. Firefox runs WebAssembly
-  on one thread, and WebGPU only where Firefox offers it (on Linux, not by default:
-  `dom.webgpu.enabled` in `about:config`).
+- Runs on the GPU through WebGPU, or on the CPU through WebAssembly. Firefox runs WebAssembly on one thread, and WebGPU only where Firefox offers it (on Linux, not by default: `dom.webgpu.enabled` in `about:config`).
 - Scores English texts of 30 tokens or more, and the first 512 tokens of a long one.
 - The score is an estimate and can be wrong.
 
@@ -38,17 +35,10 @@ npm run zip -- -b firefox    # .output/slop-detect-extension-<version>-firefox.z
 Chrome: load `.output/chrome-mv3` at `chrome://extensions` ("Load unpacked", developer mode).
 Needs Chrome 116 or newer.
 
-Firefox (140 or newer): at `about:debugging#/runtime/this-firefox`, "Load Temporary Add-on…"
-and pick `.output/firefox-mv2/manifest.json`. A temporary add-on is gone when Firefox
-restarts. Release Firefox installs only add-ons Mozilla has signed, so to keep it:
+Firefox (140 or newer): at `about:debugging#/runtime/this-firefox`, "Load Temporary Add-on…" and pick `.output/firefox-mv2/manifest.json`. A temporary add-on is gone when Firefox restarts. Release Firefox installs only add-ons Mozilla has signed, so to keep it:
 
-- Sign it for yourself: `npx web-ext sign --channel unlisted --source-dir .output/firefox-mv2`
-  with an [AMO API key](https://addons.mozilla.org/developers/addon/api/key/). This signs
-  without listing it on AMO; install the `.xpi` it writes from `about:addons` ("Install
-  Add-on From File…").
-- Or use Firefox Developer Edition, Nightly or an unbranded build, set
-  `xpinstall.signatures.required` to `false` in `about:config`, and install the Firefox zip
-  from `about:addons` as above.
+- Sign it for yourself: `npx web-ext sign --channel unlisted --source-dir .output/firefox-mv2` with an [AMO API key](https://addons.mozilla.org/developers/addon/api/key/). This signs without listing it on AMO; install the `.xpi` it writes from `about:addons` ("Install Add-on From File…").
+- Or use Firefox Developer Edition, Nightly or an unbranded build, set `xpinstall.signatures.required` to `false` in `about:config`, and install the Firefox zip from `about:addons` as above.
 
 ## Code
 
@@ -70,6 +60,4 @@ npm run e2e -- --backend webgpu       # the built extension in Chrome; also wasm
 npm run e2e -- --browser firefox      # the same in Firefox
 ```
 
-The e2e run needs a model export at `../slop-detector/runs/voi-slop-detect-380M/web`, or
-`--model <dir>`. It runs the installed Chrome, or `firefox` on the path; `--executable <path>`
-picks another, such as Chrome for Testing (`npx @puppeteer/browsers install chrome@stable`).
+The e2e run needs a model export at `../slop-detector/runs/voi-slop-detect-380M/web`, or `--model <dir>`. It runs the installed Chrome, or `firefox` on the path; `--executable <path>` picks another, such as Chrome for Testing (`npx @puppeteer/browsers install chrome@stable`).
