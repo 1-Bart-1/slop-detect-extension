@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import { TOGGLE_COMMAND } from './src/protocol';
 
 /** What only Chrome's manifest has: the model host there is an offscreen document. */
 const CHROME = {
@@ -11,9 +12,12 @@ const CHROME = {
   cross_origin_opener_policy: { value: 'same-origin' },
 };
 
-/** What only Firefox's manifest has: the model host there is the background page. */
+/**
+ * What only Firefox's manifest has: the model host there is the background page, and it
+ * reads the power source through a native helper.
+ */
 const FIREFOX = {
-  permissions: [],
+  permissions: ['nativeMessaging'],
   browser_specific_settings: {
     gecko: {
       id: 'slop-detect@1-bart-1.github.io',
@@ -31,6 +35,12 @@ export default defineConfig({
       // No host permissions: the content script's match patterns (src/sites) are all the
       // access to pages the extension has.
       permissions: [...permissions, 'storage', 'unlimitedStorage'],
+      commands: {
+        [TOGGLE_COMMAND]: {
+          suggested_key: { default: 'Alt+Shift+S' },
+          description: 'Switch marking AI-written posts and comments on or off',
+        },
+      },
       content_security_policy: {
         extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
       },

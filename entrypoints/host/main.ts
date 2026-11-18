@@ -1,9 +1,11 @@
 import workerUrl from '@/src/inference/worker.ts?worker&url';
 import { follow, note } from '@/src/host/log';
 import { Requests } from '@/src/host/requests';
+import { watchPower } from '@/src/host/power';
 import { describeState } from '@/src/host/state';
 import { CACHE_NAME } from '@/src/inference/model';
 import { type Port, post } from '@/src/ports';
+import { type Power, type ScoringSettings, type Verdict, mayScore } from '@/src/power';
 import {
   CONTROL_PORT,
   LOG_PORT,
@@ -14,6 +16,7 @@ import {
   type HostState,
   type Item,
   type ScoreRequest,
+  type ToHost,
 } from '@/src/protocol';
 
 /**
@@ -21,19 +24,27 @@ import {
  * port here and send text blocks; the scores go back over the same port. The page is
  * Chrome's offscreen document, which has no extension API but messaging, or a frame in
  * Firefox's background page; its settings arrive in its URL, and the worker reads them
- * from there too.
+ * from there too. The settings that decide whether texts are scored now come from the
+ * background, and the worker runs only while they and the power source allow it.
  */
 
 /** With no tab, popup or log page connected for this long the host closes and frees the model. */
 const IDLE_MS = 5 * 60_000;
 
-let state: HostState = { phase: 'no-model' };
+/** True once the user has agreed to the model download. */
+let modelAllowed = new URLSearchParams(location.search).get('model') === 'allowed';
+// Until the settings and the power source are in, as the worker would be.
+let state: HostState = { phase: modelAllowed ? 'preparing' : 'no-model' };
 let worker: Worker | null = null;
 /** What the tabs sent before the worker existed. */
 let held: ScoreRequest[] = [];
 const requests = new Requests<Port>(5000);
-/** The tabs and pages that are told the host's state. */
+/** The tabs and pages that are told the host's state and verdict. */
 const watchers = new Set<Port>();
+/** Null until the background and the power source have reported. */
+let settings: ScoringSettings | null = null;
+let power: Power | null = null;
+let verdict: Verdict | null = null;
 
 function setState(next: HostState): void {
   // A download reports twenty times a second: one line when it starts is enough.
@@ -62,6 +73,24 @@ function stopWorker(): void {
   requests.clear();
 }
 
+/** Starts or stops the worker after a change of the settings, the power source or the download permission. */
+function decide(): void {
+  if (!settings || !power) return;
+  const next = mayScore(settings, power);
+  if (next !== verdict) {
+    verdict = next;
+    note(`host: ${verdict}, power ${power}`);
+    for (const port of watchers) post<FromHost>(port, { type: 'verdict', verdict });
+  }
+  if (verdict === 'switched-off' || verdict === 'on-battery') {
+    if (state.phase === 'paused') return;
+    stopWorker();
+    held = [];
+    setState({ phase: 'paused' });
+  } else if (modelAllowed) startWorker();
+  else if (state.phase !== 'no-model') setState({ phase: 'no-model' });
+}
+
 function toWorker(message: ScoreRequest): void {
   if (worker) worker.postMessage(message);
   else held.push(message);
@@ -84,11 +113,13 @@ async function control(message: Control): Promise<void> {
   if (message.type === 'download') {
     // After a failure this starts over with a new worker.
     if (state.phase === 'error') stopWorker();
-    startWorker();
+    modelAllowed = true;
+    decide();
     return;
   }
   stopWorker();
   held = [];
+  modelAllowed = false;
   const deleted = await caches.delete(CACHE_NAME).catch(() => false);
   note(`host: model files ${deleted ? 'deleted' : 'were not in the cache'}`);
   setState({ phase: 'no-model' });
@@ -112,6 +143,7 @@ function watch(port: Port): void {
   watchers.add(port);
   port.onDisconnect.addListener(() => watchers.delete(port));
   post<FromHost>(port, { type: 'state', state });
+  if (verdict) post<FromHost>(port, { type: 'verdict', verdict });
 }
 
 browser.runtime.onConnect.addListener((port) => {
@@ -140,7 +172,15 @@ browser.runtime.onConnect.addListener((port) => {
   }
 });
 
+browser.runtime.onMessage.addListener((message: ToHost) => {
+  if (message.type !== 'scoring') return;
+  settings = message.settings;
+  decide();
+});
+watchPower((next) => {
+  power = next;
+  decide();
+});
+
 note(`host: started (${location.search || 'default settings'})`);
-if (new URLSearchParams(location.search).get('model') === 'allowed') startWorker();
-else setState({ phase: 'no-model' });
 closeWhenIdle();

@@ -17,6 +17,8 @@ export function describeState(state: HostState): string {
       return state.backend === 'webgpu'
         ? 'Ready, on the GPU (WebGPU).'
         : `Ready, on the CPU (WebAssembly, ${state.threads} ${state.threads === 1 ? 'thread' : 'threads'}). Slower than a GPU.`;
+    case 'paused':
+      return 'Not loaded while scoring is paused.';
     case 'error':
       return `Failed: ${state.message}`;
   }

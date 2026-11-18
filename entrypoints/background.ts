@@ -1,5 +1,5 @@
-import type { FromBackground, ToBackground } from '@/src/protocol';
-import { hostQuery, hostSettings } from '@/src/settings';
+import { TOGGLE_COMMAND, type FromBackground, type ToBackground, type ToHost } from '@/src/protocol';
+import { type DisplaySettings, displaySettings, hostQuery, hostSettings } from '@/src/settings';
 
 /** The page that hosts the model. There is one per extension. */
 const HOST_PAGE = '/host.html';
@@ -34,6 +34,12 @@ const frame: HostPlace = {
     }),
 };
 
+/** Hands the host the settings that decide whether it scores; without a host it goes nowhere. */
+function tellHost({ enabled, onlyOnMains }: DisplaySettings): Promise<void> {
+  const message: ToHost = { type: 'scoring', settings: { enabled, onlyOnMains } };
+  return browser.runtime.sendMessage(message).catch(() => undefined);
+}
+
 export default defineBackground(() => {
   const place = import.meta.env.FIREFOX ? frame : offscreen;
   /** Set while the host is being looked for or opened: two tabs can ask at the same moment. */
@@ -42,6 +48,7 @@ export default defineBackground(() => {
   async function openUnlessOpen(): Promise<void> {
     if (await place.isOpen()) return;
     await place.open(HOST_PAGE + hostQuery(await hostSettings.get()));
+    await tellHost(await displaySettings.get());
   }
 
   function ensureHost(): Promise<void> {
@@ -53,6 +60,13 @@ export default defineBackground(() => {
   // a new install opens the page that asks for it.
   browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === 'install') void browser.tabs.create({ url: browser.runtime.getURL('/welcome.html') });
+  });
+
+  displaySettings.watch((settings) => void tellHost(settings));
+  browser.commands.onCommand.addListener(async (command) => {
+    if (command !== TOGGLE_COMMAND) return;
+    const { enabled } = await displaySettings.get();
+    await displaySettings.save({ enabled: !enabled });
   });
 
   browser.runtime.onMessage.addListener((message: ToBackground, _sender, respond: (answer: FromBackground) => void) => {

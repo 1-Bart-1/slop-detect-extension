@@ -49,13 +49,16 @@ function run(site: Site): void {
   function inform(): void {
     if (!scanner) return;
     // The host scores what it is sent, now or once the model has loaded.
-    scanner.accept(!!state && state.phase !== 'no-model' && state.phase !== 'error');
+    scanner.accept(!!state && state.phase !== 'no-model' && state.phase !== 'error' && state.phase !== 'paused');
     if (state?.phase === 'ready' && settings) scanner.display(state.bands, settings.showMiddle);
   }
 
   function onMessage(message: FromHost): void {
     if (message.type === 'results') return scanner?.results(message.results);
+    if (message.type === 'verdict') return;
     state = message.state;
+    // A paused host has dropped what it had from this page.
+    if (state.phase === 'paused') scanner?.release();
     inform();
   }
 

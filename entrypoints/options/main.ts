@@ -18,6 +18,7 @@ const PHASES: Record<HostState['phase'], string> = {
   preparing: 'The model is being prepared.',
   ready: 'The model is downloaded and running.',
   error: 'The model failed to load; the log has the details.',
+  paused: 'Scoring is paused, so the model is not loaded.',
 };
 
 async function draw(): Promise<void> {

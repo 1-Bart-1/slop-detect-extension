@@ -1,5 +1,7 @@
 /** Messages between the content scripts, the extension's pages, the model host and its worker. */
 
+import type { ScoringSettings, Verdict } from './power';
+
 export interface Bands {
   /** Where the training target's human band ends. Not shown: human texts often score above it. */
   human_max: number;
@@ -34,6 +36,8 @@ export type HostState =
   | { phase: 'loading'; loaded: number; total: number; cached: boolean }
   | { phase: 'preparing' }
   | { phase: 'ready'; bands: Bands; backend: Backend; threads: number }
+  /** Texts may not be scored now (see `Verdict`): the model is not loaded. */
+  | { phase: 'paused' }
   | { phase: 'error'; message: string };
 
 /**
@@ -43,6 +47,7 @@ export type HostState =
 export type ScoreRequest = { type: 'score'; items: Item[] } | { type: 'cancel'; ids: number[] };
 export type ResultsMessage = { type: 'results'; results: Scored[] };
 export type StateMessage = { type: 'state'; state: HostState };
+export type VerdictMessage = { type: 'verdict'; verdict: Verdict };
 
 /** Worker to host. A log message is one line of the worker's trace, for the log page. */
 export type FromWorker = StateMessage | ResultsMessage | { type: 'log'; line: string };
@@ -51,11 +56,20 @@ export type FromWorker = StateMessage | ResultsMessage | { type: 'log'; line: st
 export type ToBackground = { type: 'ensure-host' };
 export type FromBackground = { ok: true } | { ok: false; error: string };
 
+/** The background to the model host: the settings it decides on, at its start and after each change. */
+export type ToHost = { type: 'scoring'; settings: ScoringSettings };
+
+/** The keyboard command that flips the master switch. */
+export const TOGGLE_COMMAND = 'toggle-scoring';
+
 /** The port a content script opens to the host: it sends a `ScoreRequest`. */
 export const SCORE_PORT = 'score';
-export type FromHost = ResultsMessage | StateMessage;
+export type FromHost = ResultsMessage | StateMessage | VerdictMessage;
 
-/** The port the popup and the options page open to the host: they get its state and can start the download. */
+/**
+ * The port the popup and the options page open to the host: they get its state and its
+ * verdict, and can start the download.
+ */
 export const CONTROL_PORT = 'control';
 export type Control = { type: 'download' } | { type: 'delete-model' };
 
