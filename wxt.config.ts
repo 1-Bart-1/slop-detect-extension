@@ -37,7 +37,7 @@ export default defineConfig({
       permissions: [...permissions, 'storage', 'unlimitedStorage'],
       commands: {
         [TOGGLE_COMMAND]: {
-          suggested_key: { default: 'Alt+Shift+S' },
+          suggested_key: { default: 'Alt+Shift+D' },
           description: 'Switch marking AI-written posts and comments on or off',
         },
       },
