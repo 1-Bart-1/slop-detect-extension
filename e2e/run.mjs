@@ -42,22 +42,11 @@ function setMains(online) {
   writeFileSync(path.join(POWER_SUPPLY, 'AC', 'online'), online ? '1\n' : '0\n');
 }
 
-/**
- * A home directory for Firefox in which the power helper of native/ is installed, as
- * native/install does, reading the fake power supply.
- */
-function firefoxHome(extensionId) {
+/** A home directory for Firefox with the power helper installed by native/install. */
+function firefoxHome() {
   const home = path.join(ROOT, '.profiles', 'firefox-home');
-  const hosts = path.join(home, '.mozilla', 'native-messaging-hosts');
-  mkdirSync(hosts, { recursive: true });
-  const manifest = {
-    name: 'slop_detect_power',
-    description: 'Tells Slop Detect whether this computer runs on mains power',
-    path: path.join(ROOT, 'native', 'slop_detect_power.py'),
-    type: 'stdio',
-    allowed_extensions: [extensionId],
-  };
-  writeFileSync(path.join(hosts, 'slop_detect_power.json'), JSON.stringify(manifest));
+  const env = { ...process.env, HOME: home, XDG_DATA_HOME: path.join(home, '.local', 'share') };
+  execFileSync(path.join(ROOT, 'native', 'install'), { env, stdio: 'inherit' });
   return home;
 }
 
@@ -111,7 +100,7 @@ async function launchFirefox(profile) {
       ...process.env,
       // WebDriver BiDi reaches extension pages only with this.
       MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1',
-      HOME: firefoxHome(id),
+      HOME: firefoxHome(),
       SLOP_DETECT_POWER_SUPPLY: POWER_SUPPLY,
     },
     extraPrefsFirefox: {

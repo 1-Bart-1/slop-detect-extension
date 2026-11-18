@@ -1,7 +1,7 @@
 import workerUrl from '@/src/inference/worker.ts?worker&url';
 import { follow, note } from '@/src/host/log';
-import { Requests } from '@/src/host/requests';
 import { watchPower } from '@/src/host/power';
+import { Requests } from '@/src/host/requests';
 import { describeState } from '@/src/host/state';
 import { CACHE_NAME } from '@/src/inference/model';
 import { type Port, post } from '@/src/ports';

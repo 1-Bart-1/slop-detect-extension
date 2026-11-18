@@ -1,7 +1,7 @@
 import type { Power } from '@/src/power';
 
 /** The native messaging host that reads the power source in Firefox: `native/` in the repo. */
-export const POWER_HELPER = 'slop_detect_power';
+const POWER_HELPER = 'slop_detect_power';
 
 /** What the power helper sends, once at its start and after each change. */
 interface HelperMessage {
