@@ -313,7 +313,9 @@ try {
   const hostLog = await textOf(log, '#log');
   console.log('--- host log ---');
   console.log(hostLog);
-  const fromCache = hostLog.includes('model_quantized.onnx_data: 448471040 bytes from cache');
+  // The first load decides: plugging back in reloads the model from the cache either way.
+  const firstLoad = hostLog.match(/model_quantized\.onnx_data: 448471040 bytes (downloaded|from cache)/)?.[1];
+  const fromCache = firstLoad === 'from cache';
   check(cached ? 'the model came from the cache' : 'the model was downloaded', fromCache === cached);
   const farText = await textOf(page, 'shreddit-comment[thingid="t1_four"] [slot="comment"]');
   check('the scored text is the block alone, without the badge', !/AI \d|Human \d/.test(farText));
