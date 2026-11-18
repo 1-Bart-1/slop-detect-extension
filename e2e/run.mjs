@@ -126,15 +126,12 @@ const textOf = (tab, selector) => tab.$eval(selector, (element) => element.inner
 const isShown = (tab, selector) => tab.$eval(selector, (element) => element.checkVisibility());
 
 try {
-  // A new install opens the welcome page in a tab of its own. Firefox installs the add-on
-  // anew on each run.
+  // Each run installs the extension, which opens the welcome page in a tab of its own.
   const welcomeUrl = `${origin}/welcome.html`;
-  if (!cached) {
-    const deadline = Date.now() + 10_000;
-    const opened = async () => (await Promise.all((await browser.pages()).map(urlOf))).includes(welcomeUrl);
-    while (!(await opened()) && Date.now() < deadline) await sleep(100);
-    check('a new install opens the welcome page', await opened());
-  }
+  const deadline = Date.now() + 10_000;
+  const opened = async () => (await Promise.all((await browser.pages()).map(urlOf))).includes(welcomeUrl);
+  while (!(await opened()) && Date.now() < deadline) await sleep(100);
+  check('a new install opens the welcome page', await opened());
   // The download is not allowed yet, and every band gets a badge, so each scored block
   // shows one. Set from a page that does not start the model host, so the host's next
   // start reads them.
@@ -150,12 +147,13 @@ try {
       display: { enabled: true, sitesOff: {}, showMiddle: true },
     },
   );
-  // Firefox installs the add-on on every run, and the welcome page that opened has started
-  // the host with the last run's settings: start the add-on over, which closes its pages.
+  // The welcome page has started the host with the last run's settings: close it, so its
+  // next start reads these. Chrome does not bring back an extension it reloads here.
   if (FIREFOX) {
-    void settings.evaluate(() => browser.runtime.reload());
+    settings.evaluate(() => browser.runtime.reload()).catch(() => undefined);
     await sleep(2000);
   } else {
+    await settings.evaluate(() => chrome.offscreen.closeDocument().catch(() => undefined));
     await settings.close();
   }
 
