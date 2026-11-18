@@ -150,7 +150,14 @@ try {
       display: { enabled: true, sitesOff: {}, showMiddle: true },
     },
   );
-  await settings.close();
+  // Firefox installs the add-on on every run, and the welcome page that opened has started
+  // the host with the last run's settings: start the add-on over, which closes its pages.
+  if (FIREFOX) {
+    void settings.evaluate(() => browser.runtime.reload());
+    await sleep(2000);
+  } else {
+    await settings.close();
+  }
 
   const fixture = readFileSync(path.join(ROOT, 'e2e/fixtures/thread.html'), 'utf8');
   const page = await browser.newPage();
@@ -203,10 +210,8 @@ try {
   await page.bringToFront();
   await sleep(1000);
   check('no badges before the download is allowed', count(await badges()) === 0);
-  // A click waits for the tab to draw, which a tab in the background does not.
-  await popup.bringToFront();
-  await popup.click('#download');
-  await page.bringToFront();
+  // Clicked from a script: a tab in the background draws nothing to click on.
+  await popup.$eval('#download', (button) => button.click());
 
   // In view: the post and comments one to three. Comment two is too short to score.
   const first = await waitForBadges(3);
