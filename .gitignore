@@ -4,3 +4,5 @@ node_modules
 # Browser profiles of the end-to-end runs, each with the 450 MB model cache, and the fake
 # home and power supply of the Firefox run
 .profiles
+# Python bytecode from running the native helper or its tests
+__pycache__/
