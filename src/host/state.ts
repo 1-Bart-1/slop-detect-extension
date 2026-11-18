@@ -16,7 +16,7 @@ export function describeState(state: HostState): string {
     case 'ready':
       return state.backend === 'webgpu'
         ? 'Ready, on the GPU (WebGPU).'
-        : `Ready, on the CPU (WebAssembly, ${state.threads} threads). Slower than a GPU.`;
+        : `Ready, on the CPU (WebAssembly, ${state.threads} ${state.threads === 1 ? 'thread' : 'threads'}). Slower than a GPU.`;
     case 'error':
       return `Failed: ${state.message}`;
   }
