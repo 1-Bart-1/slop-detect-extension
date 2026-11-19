@@ -1,0 +1,25 @@
+{
+  "name": {
+    "en-US": "Slop Detect"
+  },
+  "slug": "slop-detect",
+  "summary": {
+    "en-US": "Marks posts and comments on Reddit, LinkedIn, Hacker News and X as AI-written or human. The model runs in your browser, so no text leaves your computer."
+  },
+  "description": {
+    "en-US": "Slop Detect puts a badge next to posts and comments on Reddit, LinkedIn, Hacker News and X: \"AI 0.93\" or \"Human 0.04\", the model's estimate of whether a text was written by AI.\n\n- It runs locally: the model runs in your browser, and no text leaves your computer.\n- On first use it downloads the model from Hugging Face, once: 450 MB.\n- On the CPU it is slow. With WebGPU it runs on the graphics card; on Linux, switch WebGPU on first by setting `dom.webgpu.enabled` to `true` in `about:config`.\n- It scores English texts, and the score is an estimate that can be wrong.\n- Alt+Shift+D switches it on or off.\n\nThis is a Firefox port of Slop Detect by Voight-Kampff Labs: https://github.com/voightkampfflabs/slop-detect-extension"
+  },
+  "categories": {
+    "firefox": [
+      "social-communication"
+    ]
+  },
+  "homepage": {
+    "en-US": "https://github.com/1-Bart-1/slop-detect-extension"
+  },
+  "default_locale": "en-US",
+  "version": {
+    "license": "all-rights-reserved",
+    "approval_notes": "The extension is built with WXT and Vite from the attached sources, on Linux with Node 24 and npm 11 (built here with Node 24.20.0 and npm 11.19.0):\n\nnpm ci\nnpm run build -- -b firefox\n\nThe extension is then in .output/firefox-mv2, identical to the submitted file. README.md has the same steps.\n\nThe ort-wasm-simd-threaded*.mjs and .wasm files are onnxruntime-web 1.31.1 files from npm, unchanged but for their names. ort.webgpu.bundle.min-*.js and ort.wasm.bundle.min-*.js are its dist/ort.webgpu.bundle.min.mjs and dist/ort.wasm.bundle.min.mjs, re-bundled by Vite. The model is downloaded from huggingface.co only after the user clicks \"Download model\"."
+  }
+}

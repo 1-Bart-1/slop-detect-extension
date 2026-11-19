@@ -1,6 +1,6 @@
 # Privacy policy
 
-Slop Detect is a Chrome extension that marks posts and comments as "AI" or "Human".
+Slop Detect is a browser extension, for Chrome and Firefox, that marks posts and comments as "AI" or "Human".
 
 ## What it reads
 
@@ -16,8 +16,8 @@ on battery. The Firefox build does not read it. It is not saved or sent anywhere
 
 - The model files, in the browser's cache, until you delete them on the options page or
   remove the extension.
-- Your settings. The on/off switches are kept in Chrome's synced storage, so Chrome copies
-  them to your other browsers if you use Chrome sync.
+- Your settings. The on/off switches are kept in the browser's synced storage, so Chrome
+  or Firefox copies them to your other browsers if you use its sync.
 
 ## What goes over the network
 
@@ -31,9 +31,9 @@ The extension makes no other requests. It has no account, no analytics and no ad
 
 The extension uses the page content it reads only to show the badges. We do not collect,
 sell or transfer user data, and we do not use it for advertising, for creditworthiness or
-for any purpose other than the one above. This follows the Chrome Web Store User Data
+for any purpose other than the one above. In Chrome this follows the Chrome Web Store User Data
 Policy, including its Limited Use requirements.
 
 ## Questions
 
-Open an issue at https://github.com/voightkampfflabs/slop-detect-extension/issues.
+Open an issue at https://github.com/1-Bart-1/slop-detect-extension/issues.
