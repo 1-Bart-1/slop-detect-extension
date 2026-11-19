@@ -76,12 +76,12 @@ function stopWorker(): void {
 function decide(): void {
   if (!settings || !power) return;
   const next = mayScore(settings, power);
-  if (next.scoring !== verdict?.scoring || next.batterySetting !== verdict.batterySetting) {
+  if (JSON.stringify(next) !== JSON.stringify(verdict)) {
     verdict = next;
     note(`host: ${verdict.scoring}, power ${power}`);
     for (const port of watchers) post<FromHost>(port, { type: 'verdict', verdict });
   }
-  if (verdict.scoring !== 'score') {
+  if (next.scoring !== 'score') {
     if (state.phase === 'paused') return;
     stopWorker();
     held = [];

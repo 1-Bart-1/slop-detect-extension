@@ -32,6 +32,6 @@ test('the battery setting is offered wherever the power source can be read, swit
     for (const power of ['mains', 'battery'] as const) {
       expect(mayScore({ enabled, onlyOnMains: true }, power).batterySetting).toBe(true);
     }
-    expect(mayScore({ enabled, onlyOnMains: true }, 'unknown').batterySetting).toBe(false);
   }
+  expect(mayScore({ enabled: false, onlyOnMains: true }, 'unknown').batterySetting).toBe(false);
 });

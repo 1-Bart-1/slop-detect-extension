@@ -9,8 +9,8 @@ comments on the page, to score them. The scoring happens in your browser, with a
 stored on your computer. The texts and the scores are not sent to us or to anyone else,
 and they are not saved.
 
-It also reads whether the computer is plugged in, to stop scoring while it runs on
-battery. It is not saved or sent anywhere.
+In Chrome it also reads whether the computer is plugged in, to stop scoring while it runs
+on battery. The Firefox build does not read it. It is not saved or sent anywhere.
 
 ## What it stores
 
