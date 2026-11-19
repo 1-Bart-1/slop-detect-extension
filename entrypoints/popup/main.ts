@@ -9,6 +9,7 @@ import { controlHost } from '@/src/ui/host';
 
 const enabled = element<HTMLInputElement>('enabled');
 const sites = element<HTMLDivElement>('sites');
+const batterySetting = element<HTMLLabelElement>('battery-setting');
 const onlyOnMains = element<HTMLInputElement>('only-on-mains');
 const verdictNote = element<HTMLParagraphElement>('verdict');
 const status = element<HTMLParagraphElement>('status');
@@ -49,6 +50,7 @@ function drawState(state: HostState): void {
 }
 
 function drawVerdict(verdict: Verdict): void {
+  batterySetting.hidden = !verdict.batterySetting;
   verdictNote.textContent = describeVerdict(verdict);
   verdictNote.hidden = !verdictNote.textContent;
 }

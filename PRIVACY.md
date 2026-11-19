@@ -10,8 +10,7 @@ stored on your computer. The texts and the scores are not sent to us or to anyon
 and they are not saved.
 
 It also reads whether the computer is plugged in, to stop scoring while it runs on
-battery. In Firefox that comes from the optional power helper, a small program on your
-computer that reads it from the system. It is not saved or sent anywhere.
+battery. It is not saved or sent anywhere.
 
 ## What it stores
 

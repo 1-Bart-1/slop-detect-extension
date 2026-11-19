@@ -25,18 +25,9 @@ the 8-bit quantized ONNX export.
 
 ## Battery and shortcut
 
-"Only score while plugged in", on by default in the popup: on battery nothing is scored and the model is unloaded, and scoring carries on by itself once the computer is plugged in again. The popup says when that is why there are no badges.
+In Chrome, "Only score while plugged in", on by default in the popup: on battery nothing is scored and the model is unloaded, and scoring carries on by itself once the computer is plugged in again. The popup says when that is why there are no badges. Firefox gives extensions no way to tell whether the computer is plugged in, so it has no such setting and scores whenever the extension is on.
 
 Alt+Shift+D switches the extension on or off. Change the key in Chrome at `chrome://extensions/shortcuts`, in Firefox at `about:addons` under the gear menu, "Manage Extension Shortcuts".
-
-Chrome knows the power source by itself. Firefox gives extensions no way to read it, so on Linux it needs a small helper, `native/`, which needs `python3`:
-
-```
-native/install            # once, for your user; restart Firefox afterwards
-native/install --remove   # takes it out again
-```
-
-Without the helper, Firefox scores on battery too, and the popup says the helper is missing.
 
 ## Build
 
@@ -64,7 +55,7 @@ Firefox (140 or newer): at `about:debugging#/runtime/this-firefox`, "Load Tempor
 | worker: tokenizes, batches, runs ONNX Runtime | `src/inference/` |
 | sites: selectors for each site, one file per site | `src/sites/` |
 | pages: popup, options, welcome, log | `entrypoints/` |
-| whether to score now, and the power source | `src/power.ts`, `src/host/power.ts`, `native/` |
+| whether to score now, and the power source | `src/power.ts`, `src/host/power.ts` |
 
 To add a site, add a `Site` to `src/sites/` and list it in `src/sites/index.ts`.
 
@@ -72,9 +63,8 @@ To add a site, add a `Site` to `src/sites/` and list it in `src/sites/index.ts`.
 
 ```
 npm test                              # unit tests
-python3 -m unittest discover -s native   # the power helper
 npm run e2e -- --backend webgpu       # the built extension in Chrome; also wasm, auto
 npm run e2e -- --browser firefox      # the same in Firefox
 ```
 
-The e2e run needs a model export at `../slop-detector/runs/voi-slop-detect-380M/web`, or `--model <dir>`. It runs the installed Chrome, or `firefox` on the path; `--executable <path>` picks another, such as Chrome for Testing (`npx @puppeteer/browsers install chrome@stable`). In Firefox it also unplugs a fake power supply and checks that nothing is scored until it is plugged in again.
+The e2e run needs a model export at `../slop-detector/runs/voi-slop-detect-380M/web`, or `--model <dir>`. It runs the installed Chrome, or `firefox` on the path; `--executable <path>` picks another, such as Chrome for Testing (`npx @puppeteer/browsers install chrome@stable`). In Chrome it also unplugs the battery as the extension sees it and checks that nothing is scored until it is plugged in again.

@@ -12,12 +12,9 @@ const CHROME = {
   cross_origin_opener_policy: { value: 'same-origin' },
 };
 
-/**
- * What only Firefox's manifest has: the model host there is the background page, and it
- * reads the power source through a native helper.
- */
+/** What only Firefox's manifest has: the model host there is the background page. */
 const FIREFOX = {
-  permissions: ['nativeMessaging'],
+  permissions: [],
   browser_specific_settings: {
     gecko: {
       id: 'slop-detect@1-bart-1.github.io',

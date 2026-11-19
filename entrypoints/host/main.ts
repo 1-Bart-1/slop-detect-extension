@@ -76,12 +76,12 @@ function stopWorker(): void {
 function decide(): void {
   if (!settings || !power) return;
   const next = mayScore(settings, power);
-  if (next !== verdict) {
+  if (next.scoring !== verdict?.scoring || next.batterySetting !== verdict.batterySetting) {
     verdict = next;
-    note(`host: ${verdict}, power ${power}`);
+    note(`host: ${verdict.scoring}, power ${power}`);
     for (const port of watchers) post<FromHost>(port, { type: 'verdict', verdict });
   }
-  if (verdict === 'switched-off' || verdict === 'on-battery') {
+  if (verdict.scoring !== 'score') {
     if (state.phase === 'paused') return;
     stopWorker();
     held = [];
@@ -176,7 +176,7 @@ browser.runtime.onMessage.addListener((message: ToHost) => {
   settings = message.settings;
   decide();
 });
-watchPower((next) => {
+void watchPower((next) => {
   power = next;
   decide();
 });

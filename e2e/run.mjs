@@ -7,7 +7,7 @@
 // Each browser and backend has its own profile under .profiles/, which keeps the model
 // cache between runs; --fresh deletes it first.
 import { execFileSync } from 'node:child_process';
-import { createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -32,24 +32,6 @@ const FIREFOX = args.browser === 'firefox';
 const EXTENSION = path.join(ROOT, FIREFOX ? '.output/firefox-mv2' : '.output/chrome-mv3');
 /** Firefox names an extension's origin by a random id: the profile gets this one instead. */
 const FIREFOX_UUID = '5e7ec7a1-51a0-4d7e-8000-000000000001';
-/** A power supply directory as Linux lays it out, with one adapter that the run plugs and unplugs. */
-const POWER_SUPPLY = path.join(ROOT, '.profiles', 'power-supply');
-
-/** Plugs the fake adapter in or out; the power helper reads it within two seconds. */
-function setMains(online) {
-  mkdirSync(path.join(POWER_SUPPLY, 'AC'), { recursive: true });
-  writeFileSync(path.join(POWER_SUPPLY, 'AC', 'type'), 'Mains\n');
-  writeFileSync(path.join(POWER_SUPPLY, 'AC', 'online'), online ? '1\n' : '0\n');
-}
-
-/** A home directory for Firefox with the power helper installed by native/install. */
-function firefoxHome() {
-  const home = path.join(ROOT, '.profiles', 'firefox-home');
-  const env = { ...process.env, HOME: home, XDG_DATA_HOME: path.join(home, '.local', 'share') };
-  execFileSync(path.join(ROOT, 'native', 'install'), { env, stdio: 'inherit' });
-  return home;
-}
-
 /** Serves the export directory to the extension's origin, as the hub does (CORS open). */
 function serveModel(dir) {
   const server = createServer((request, response) => {
@@ -100,8 +82,6 @@ async function launchFirefox(profile) {
       ...process.env,
       // WebDriver BiDi reaches extension pages only with this.
       MOZ_REMOTE_ALLOW_SYSTEM_ACCESS: '1',
-      HOME: firefoxHome(),
-      SLOP_DETECT_POWER_SUPPLY: POWER_SUPPLY,
     },
     extraPrefsFirefox: {
       'extensions.webextensions.uuids': JSON.stringify({ [id]: FIREFOX_UUID }),
@@ -127,7 +107,6 @@ const profile = path.join(ROOT, '.profiles', `${args.browser}-${args.backend}`);
 if (args.fresh) rmSync(profile, { recursive: true, force: true });
 /** A profile from an earlier run holds the model: this run must not download it again. */
 const cached = existsSync(profile);
-setMains(true);
 const { browser, origin } = await (FIREFOX ? launchFirefox : launchChrome)(profile);
 let failed = false;
 
@@ -290,22 +269,32 @@ try {
 
   const scrollDown = () => page.$eval('shreddit-comment[thingid="t1_four"]', (comment) => comment.scrollIntoView());
   if (FIREFOX) {
-    // Firefox reads the fake power supply through the helper; Chrome reads the real one.
-    setMains(false);
+    check('the popup offers no battery setting, as Firefox cannot tell the power source', !(await isShown(popup, '#battery-setting')));
+    await scrollDown();
+  } else {
+    check('the popup offers the battery setting', await isShown(popup, '#battery-setting'));
+    // Unplugs the host's own battery object, so its change listener runs as on a real unplug.
+    const hostTarget = await browser.waitForTarget((target) => target.url().startsWith(`${origin}/host.html`));
+    const host = await hostTarget.asPage();
+    const setCharging = (charging) =>
+      host.evaluate(async (charging) => {
+        const battery = await navigator.getBattery();
+        Object.defineProperty(battery, 'charging', { value: charging, configurable: true });
+        battery.dispatchEvent(new Event('chargingchange'));
+      }, charging);
+    await setCharging(false);
     const onBattery = () => document.querySelector('#verdict')?.textContent.startsWith('On battery');
     check('the popup says nothing is scored on battery', await holdsWithin(popup, 10_000, onBattery));
     check('the popup says the model is not loaded', (await textOf(popup, '#status')) === 'Not loaded while scoring is paused.');
     await scrollDown();
     await sleep(5000);
     check('on battery, the comment scrolled to is not scored', (await badges()).t1_four === null);
-    setMains(true);
-  } else {
-    await scrollDown();
+    await setCharging(true);
   }
   const second = await waitForBadges(4);
   console.log('badges after scrolling:', JSON.stringify(second));
   check(
-    FIREFOX ? 'plugged in again, the comment scrolled to on battery gets a badge' : 'the comment far below has a badge after scrolling to it',
+    FIREFOX ? 'the comment far below has a badge after scrolling to it' : 'plugged in again, the comment scrolled to on battery gets a badge',
     !!second.t1_four,
   );
   check('with no time on its metadata line, the badge is at the top of the text', !!second.t1_four?.endsWith('(text)'));
