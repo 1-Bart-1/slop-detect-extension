@@ -6,6 +6,11 @@
   --accent: #2f6fde;
 }
 
+/* Above the display of each element below, which would show it anyway. */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 14px 16px;
